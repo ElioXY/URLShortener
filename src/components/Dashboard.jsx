@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api.js";
 import {
-  ArrowRightIcon,
   Background,
   CopyButton,
   DownloadIcon,
+  EditIcon,
   ExternalIcon,
   GitHubIcon,
   Nav,
+  CopyImageNotice,
   QrIcon,
+  ShareButton,
   TrashIcon,
   formatDate,
   relativeDate,
   useCountUp,
 } from "./ui.jsx";
-import { QrCanvas, downloadPng, downloadSvg } from "./Qr.jsx";
+import { QrCanvas, copyQrPng, downloadLabel, downloadPng, downloadSvg } from "./Qr.jsx";
 import { HistoryModal, Sparkline } from "./History.jsx";
 import Shortener from "./Shortener.jsx";
 import { linkTo } from "../router.js";
@@ -31,19 +33,33 @@ const AUTH_MESSAGES = {
 
 function computeTotals(links) {
   return links.reduce(
-    (acc, link) => ({ links: acc.links + 1, clicks: acc.clicks + Number(link.clicks || 0) }),
-    { links: 0, clicks: 0 }
+    (acc, link) => ({
+      links: acc.links + 1,
+      clicks: acc.clicks + Number(link.clicks || 0),
+      uniqueClicks: acc.uniqueClicks + Number(link.uniqueClicks || 0),
+    }),
+    { links: 0, clicks: 0, uniqueClicks: 0 }
   );
+}
+
+function isExpired(link) {
+  return Boolean(link.expiresAt && Date.now() > link.expiresAt);
+}
+
+function uniques(count) {
+  const value = Math.round(count || 0);
+  return `${value} ${value === 1 ? "único" : "únicos"}`;
 }
 
 export default function Dashboard({ me, loadingMe }) {
   const user = me?.user ?? null;
   const [links, setLinks] = useState([]);
-  const [totals, setTotals] = useState({ links: 0, clicks: 0 });
+  const [totals, setTotals] = useState({ links: 0, clicks: 0, uniqueClicks: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modalLink, setModalLink] = useState(null);
   const [historyLink, setHistoryLink] = useState(null);
+  const [editLink, setEditLink] = useState(null);
   const [confirming, setConfirming] = useState("");
   const [deleting, setDeleting] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -63,18 +79,19 @@ export default function Dashboard({ me, loadingMe }) {
   }, [authMessage]);
 
   async function load() {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
     setRefreshing(true);
     setError("");
     try {
       const data = await api.list();
       setLinks(data.links || []);
-      setTotals(data.totals || { links: 0, clicks: 0 });
+      setTotals(data.totals || { links: 0, clicks: 0, uniqueClicks: 0 });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No hemos podido cargar tus enlaces.");
+      if (err instanceof ApiError && err.status === 401) {
+        setLinks([]);
+        setTotals({ links: 0, clicks: 0, uniqueClicks: 0 });
+      } else {
+        setError(err instanceof ApiError ? err.message : "No hemos podido cargar tus enlaces.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -88,7 +105,11 @@ export default function Dashboard({ me, loadingMe }) {
 
   function handleCreated(link) {
     setLinks((previous) => [link, ...previous]);
-    setTotals((previous) => ({ links: previous.links + 1, clicks: previous.clicks }));
+    setTotals((previous) => ({ ...previous, links: previous.links + 1 }));
+  }
+
+  function handleSaved(updated) {
+    setLinks((previous) => previous.map((link) => (link.id === updated.id ? { ...link, ...updated } : link)));
   }
 
   async function handleDelete(id) {
@@ -100,6 +121,7 @@ export default function Dashboard({ me, loadingMe }) {
       setLinks(next);
       setTotals(computeTotals(next));
       setConfirming("");
+      if (editLink?.id === id) setEditLink(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No hemos podido borrar el enlace.");
     } finally {
@@ -109,6 +131,7 @@ export default function Dashboard({ me, loadingMe }) {
 
   const linksCount = useCountUp(totals.links);
   const clicksCount = useCountUp(totals.clicks);
+  const uniqueCount = useCountUp(totals.uniqueClicks || 0);
   const averageCount = useCountUp(totals.links ? totals.clicks / totals.links : 0);
   const average = totals.links ? averageCount.toFixed(1) : "0";
 
@@ -147,43 +170,39 @@ export default function Dashboard({ me, loadingMe }) {
               <span className="spinner spinner-dark" aria-hidden="true" />
               <p>Comprobando tu sesión…</p>
             </div>
-          ) : !user ? (
-            <section className="gate">
-              <div className="gate-card">
-                <span className="gate-icon">
-                  <GitHubIcon size={26} />
-                </span>
-                <h2>Entra con GitHub para ver tu panel</h2>
-                <p>
-                  Tus enlaces quedan ligados a tu cuenta: podrás copiarlos, descargar sus QR y ver los clics desde
-                  cualquier dispositivo.
-                </p>
-                <a className="btn btn-primary" href="/auth/github">
-                  <GitHubIcon /> Continuar con GitHub
-                </a>
-                {!me?.authReady && (
-                  <p className="gate-note">
-                    Este despliegue aún no tiene configuradas las credenciales de GitHub. Añade{" "}
-                    <code>GITHUB_CLIENT_ID</code> y <code>GITHUB_CLIENT_SECRET</code> a los secretos del proyecto.
-                  </p>
-                )}
-                <a className="gate-back" href="/" onClick={(event) => linkTo(event, "/")}>
-                  Volver al acortador <ArrowRightIcon size={14} />
-                </a>
-              </div>
-            </section>
           ) : (
             <>
+              {!user && (
+                <div className="claim">
+                  <div>
+                    <strong>{links.length ? "Estos enlaces están guardados en este navegador" : "Panel sin cuenta"}</strong>
+                    <p>
+                      Puedes crear y gestionar enlaces aquí mismo. Entra con GitHub para pasarlos a tu cuenta y no
+                      perderlos si cambias de dispositivo.
+                    </p>
+                    {!me?.authReady && (
+                      <p className="claim-note">
+                        Este despliegue aún no tiene configuradas las credenciales de GitHub. Añade{" "}
+                        <code>GITHUB_CLIENT_ID</code> y <code>GITHUB_CLIENT_SECRET</code> a los secretos del proyecto.
+                      </p>
+                    )}
+                  </div>
+                  <a className="btn btn-primary btn-sm" href="/auth/github">
+                    <GitHubIcon /> Entrar con GitHub
+                  </a>
+                </div>
+              )}
+
               <div className="stats">
                 <div className="stat">
                   <span className="stat-label">Enlaces</span>
                   <strong className="stat-value">{Math.round(linksCount)}</strong>
-                  <span className="stat-hint">guardados en tu cuenta</span>
+                  <span className="stat-hint">{user ? "guardados en tu cuenta" : "en este navegador"}</span>
                 </div>
                 <div className="stat">
                   <span className="stat-label">Clics totales</span>
                   <strong className="stat-value">{Math.round(clicksCount)}</strong>
-                  <span className="stat-hint">visitas a tus enlaces</span>
+                  <span className="stat-hint">{uniques(uniqueCount)} · sin bots</span>
                 </div>
                 <div className="stat">
                   <span className="stat-label">Media por enlace</span>
@@ -247,6 +266,11 @@ export default function Dashboard({ me, loadingMe }) {
                             <a href={link.shortUrl} target="_blank" rel="noreferrer">
                               {link.shortUrl.replace(/^https?:\/\//, "")}
                             </a>
+                            {!link.active && <span className="badge">Desactivado</span>}
+                            {link.active && isExpired(link) && <span className="badge">Caducado</span>}
+                            {link.active && !isExpired(link) && link.expiresAt && (
+                              <span className="badge badge-soft">Hasta {formatDate(link.expiresAt)}</span>
+                            )}
                           </div>
                           <p className="link-target" title={link.target}>
                             {link.target}
@@ -263,12 +287,17 @@ export default function Dashboard({ me, loadingMe }) {
                             <Sparkline history={link.history} />
                             <span className="stat-badge">
                               <strong>{link.clicks}</strong> clics
+                              <span className="stat-unique"> · {uniques(link.uniqueClicks)}</span>
                             </span>
                           </button>
                           <span className="link-date">
-                            {link.lastClickedAt
-                              ? `Último clic ${relativeDate(link.lastClickedAt)}`
-                              : `Creado el ${formatDate(link.createdAt)}`}
+                            {!link.active
+                              ? "Pausado"
+                              : isExpired(link)
+                                ? `Caducado el ${formatDate(link.expiresAt)}`
+                                : link.lastClickedAt
+                                  ? `Último clic ${relativeDate(link.lastClickedAt)}`
+                                  : `Creado el ${formatDate(link.createdAt)}`}
                           </span>
                         </div>
 
@@ -293,6 +322,14 @@ export default function Dashboard({ me, loadingMe }) {
                               <CopyButton value={link.shortUrl} label="Copiar" className="btn btn-ghost btn-xs" />
                               <button type="button" className="btn btn-ghost btn-xs" onClick={() => setModalLink(link)}>
                                 <QrIcon size={14} /> QR
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                onClick={() => setEditLink(link)}
+                                aria-label={`Editar ${link.shortUrl}`}
+                              >
+                                <EditIcon size={15} />
                               </button>
                               <a
                                 className="icon-btn"
@@ -319,20 +356,22 @@ export default function Dashboard({ me, loadingMe }) {
                   </ul>
                 )}
 
-                <button
-                  type="button"
-                  className="logout"
-                  onClick={async () => {
-                    try {
-                      await api.logout();
-                    } catch {
-                      /* ignore */
-                    }
-                    window.location.href = "/";
-                  }}
-                >
-                  Cerrar sesión
-                </button>
+                {user && (
+                  <button
+                    type="button"
+                    className="logout"
+                    onClick={async () => {
+                      try {
+                        await api.logout();
+                      } catch {
+                        /* ignore */
+                      }
+                      window.location.href = "/";
+                    }}
+                  >
+                    Cerrar sesión
+                  </button>
+                )}
               </section>
             </>
           )}
@@ -350,11 +389,161 @@ export default function Dashboard({ me, loadingMe }) {
 
       {modalLink && <QrModal link={modalLink} onClose={() => setModalLink(null)} />}
       {historyLink && <HistoryModal link={historyLink} onClose={() => setHistoryLink(null)} />}
+      {editLink && (
+        <EditModal link={editLink} onClose={() => setEditLink(null)} onSaved={handleSaved} />
+      )}
     </>
   );
 }
 
+function EditModal({ link, onClose, onSaved }) {
+  const [target, setTarget] = useState(link.target);
+  const [slug, setSlug] = useState(link.slug);
+  const [active, setActive] = useState(link.active !== false);
+  const [expires, setExpires] = useState(
+    link.expiresAt ? new Date(link.expiresAt).toISOString().slice(0, 10) : ""
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const slugChanged = slug.trim().toLowerCase() !== link.slug;
+
+  useEffect(() => {
+    function onKey(event) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onClose]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (saving) return;
+    setError("");
+    setSaving(true);
+    try {
+      const data = await api.update(link.id, {
+        target: target.trim(),
+        slug: slug.trim().toLowerCase(),
+        active,
+        expiresAt: expires || null,
+      });
+      onSaved(data.link);
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No hemos podido guardar los cambios.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="modal-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="modal modal-edit" role="dialog" aria-modal="true" aria-label={`Editar ${link.shortUrl}`}>
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
+          ×
+        </button>
+        <p className="modal-eyebrow">Editar enlace</p>
+        <h3 className="modal-title">/{link.slug}</h3>
+
+        <form className="edit-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>Destino</span>
+            <input
+              className="input"
+              type="text"
+              inputMode="url"
+              spellCheck="false"
+              value={target}
+              onChange={(event) => setTarget(event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="field">
+            <span>Final del enlace</span>
+            <span className="slug-field">
+              <span className="slug-prefix">/</span>
+              <input
+                className="input"
+                type="text"
+                maxLength={32}
+                value={slug}
+                onChange={(event) => setSlug(event.target.value)}
+                required
+              />
+            </span>
+          </label>
+          {slugChanged && <p className="edit-note">El enlace anterior dejará de funcionar en cuanto guardes.</p>}
+
+          <div className="edit-row">
+            <label className="check">
+              <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
+              <span>Enlace activo</span>
+            </label>
+
+            <label className="field field-date">
+              <span>Caduca el</span>
+              <input
+                className="input"
+                type="date"
+                value={expires}
+                onChange={(event) => setExpires(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <p className="hint">
+            Sin fecha, el enlace no caduca. Desactivarlo lo pausa sin borrar los clics que ya tiene.
+          </p>
+
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="modal-actions">
+            <button className="btn btn-primary btn-sm" type="submit" disabled={saving}>
+              {saving ? "Guardando…" : "Guardar cambios"}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function QrModal({ link, onClose }) {
+  const [labelSize, setLabelSize] = useState("60");
+  const [labelColor, setLabelColor] = useState("ink");
+  const [copiedQr, setCopiedQr] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  async function handleCopyQr() {
+    const ok = await copyQrPng(link.shortUrl);
+    if (!ok) {
+      setCopyFailed(true);
+      return;
+    }
+    setCopyFailed(false);
+    setCopiedQr(true);
+    setTimeout(() => setCopiedQr(false), 1700);
+  }
+
   useEffect(() => {
     function onKey(event) {
       if (event.key === "Escape") onClose();
@@ -401,7 +590,54 @@ function QrModal({ link, onClose }) {
           >
             SVG
           </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopyQr}>
+            {copiedQr ? "QR copiado" : "Copiar QR"}
+          </button>
           <CopyButton value={link.shortUrl} label="Copiar enlace" className="btn btn-ghost btn-sm" />
+          <ShareButton
+            title="elioxy links"
+            text={link.shortUrl}
+            url={link.shortUrl}
+            label="Compartir"
+            className="btn btn-ghost btn-sm"
+          />
+        </div>
+        {copyFailed && <CopyImageNotice onDownload={() => downloadPng(link.shortUrl, `qr-${link.slug}`)} />}
+
+        <div className="label-block">
+          <p className="label-block-title">Etiqueta imprimible</p>
+          <div className="label-tools">
+            <label className="select-field">
+              <span>Tamaño</span>
+              <select className="select" value={labelSize} onChange={(event) => setLabelSize(event.target.value)}>
+                <option value="40">40 mm</option>
+                <option value="60">60 mm</option>
+                <option value="100">100 mm</option>
+              </select>
+            </label>
+            <label className="select-field">
+              <span>Color</span>
+              <select className="select" value={labelColor} onChange={(event) => setLabelColor(event.target.value)}>
+                <option value="ink">Tinta</option>
+                <option value="cobalt">Cobalto</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              aria-label="Descargar etiqueta imprimible"
+              onClick={() =>
+                downloadLabel(link.shortUrl, {
+                  slug: link.slug,
+                  sizeMm: Number(labelSize),
+                  color: labelColor === "cobalt" ? "#1f2ce0" : "#131311",
+                })
+              }
+            >
+              <DownloadIcon /> Etiqueta
+            </button>
+          </div>
+          <p className="hint">SVG a tamaño real, con marcas de corte para imprimir y recortar.</p>
         </div>
       </div>
     </div>

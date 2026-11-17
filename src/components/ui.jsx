@@ -96,6 +96,21 @@ export const ExternalIcon = (props) => (
   </Svg>
 );
 
+export const ShareIcon = (props) => (
+  <Svg {...props}>
+    <path d="M12 3v11" />
+    <path d="M8 7l4-4 4 4" />
+    <path d="M5 13v6.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V13" />
+  </Svg>
+);
+
+export const EditIcon = (props) => (
+  <Svg {...props}>
+    <path d="M4 20h4l10.7-10.7a2.1 2.1 0 0 0-3-3L5 17v3z" />
+    <path d="M13.5 6.5l3 3" />
+  </Svg>
+);
+
 export const TrashIcon = (props) => (
   <Svg {...props}>
     <path d="M4 7h16" />
@@ -166,6 +181,9 @@ export function Nav({ me, variant = "landing" }) {
           <nav className="nav-links" aria-label="Secciones">
             <a href="#funciones">Funciones</a>
             <a href="#como-funciona">Cómo funciona</a>
+            <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
+              Generador QR
+            </a>
             <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
               Panel
             </a>
@@ -220,6 +238,37 @@ export async function copyText(text) {
   }
 }
 
+export function ShareButton({ title, text, url, label = "Compartir", className = "btn btn-ghost btn-sm" }) {
+  const [done, setDone] = useState(false);
+  const timer = useRef(null);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  async function handleClick() {
+    const payload = { title, text, url };
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share(payload);
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+      }
+    }
+    const ok = await copyText(url || text || "");
+    if (!ok) return;
+    setDone(true);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setDone(false), 1700);
+  }
+
+  return (
+    <button type="button" className={`${className}${done ? " is-copied" : ""}`} onClick={handleClick}>
+      {done ? <CheckIcon /> : <ShareIcon />}
+      <span>{done ? "Copiado" : label}</span>
+    </button>
+  );
+}
+
 export function CopyButton({ value, label = "Copiar", className = "btn btn-ghost btn-sm" }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef(null);
@@ -239,6 +288,17 @@ export function CopyButton({ value, label = "Copiar", className = "btn btn-ghost
       {copied ? <CheckIcon /> : <CopyIcon />}
       <span>{copied ? "Copiado" : label}</span>
     </button>
+  );
+}
+
+export function CopyImageNotice({ onDownload }) {
+  return (
+    <p className="copy-notice" role="status">
+      <span>Este navegador no deja copiar la imagen del QR.</span>
+      <button type="button" className="copy-notice-action" onClick={onDownload}>
+        <DownloadIcon /> Descargar PNG
+      </button>
+    </p>
   );
 }
 

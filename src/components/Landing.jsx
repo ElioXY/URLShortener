@@ -7,6 +7,7 @@ const EXAMPLE = "https://url.elioxy.us.ci/mi-cafe";
 
 export default function Landing({ me }) {
   const user = me?.user ?? null;
+  const initialSlug = new URLSearchParams(window.location.search).get("slug") || "";
 
   return (
     <>
@@ -27,9 +28,11 @@ export default function Landing({ me }) {
                 clics se quedan guardados en tu panel.
               </p>
 
-              <Shortener user={user} variant="landing" />
+              <Shortener user={user} variant="landing" initialSlug={initialSlug} />
 
-              <p className="hero-note">Sin cuenta puedes acortar. Con GitHub se guarda el enlace y su histórico.</p>
+              <p className="hero-note">
+                Sin cuenta puedes acortar y gestionarlo en este navegador. Con GitHub pasa a tu cuenta, con sus clics.
+              </p>
             </div>
 
             <div className="hero-visual">

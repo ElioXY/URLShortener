@@ -80,11 +80,17 @@ export function HistoryChart({ history, days = 30 }) {
   );
 }
 
+function uniques(count) {
+  const value = Math.round(count || 0);
+  return `${value} ${value === 1 ? "único" : "únicos"}`;
+}
+
 export function HistoryModal({ link, onClose }) {
   const [range, setRange] = useState(30);
   const [series, setSeries] = useState(null);
   const [loadedRange, setLoadedRange] = useState(null);
   const [total, setTotal] = useState(0);
+  const [unique, setUnique] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -112,12 +118,14 @@ export function HistoryModal({ link, onClose }) {
         setSeries(data.series || []);
         setLoadedRange(data.days || range);
         setTotal(Number(data.total) || 0);
+        setUnique(Number(data.unique) || 0);
       })
       .catch(() => {
         if (!alive) return;
         setSeries(null);
         setLoadedRange(null);
         setTotal(0);
+        setUnique(0);
         setError("No hemos podido cargar el histórico de este enlace.");
       })
       .finally(() => {
@@ -157,12 +165,12 @@ export function HistoryModal({ link, onClose }) {
           <div className="history-stat">
             <span>Total</span>
             <strong>{link.clicks}</strong>
-            <em>clics históricos</em>
+            <em>clics · {uniques(link.uniqueClicks)}</em>
           </div>
           <div className="history-stat">
             <span>En el rango</span>
             <strong>{series ? total : "—"}</strong>
-            <em>{shownRange} días</em>
+            <em>{shownRange} días · {uniques(unique)}</em>
           </div>
           <div className="history-stat">
             <span>Mejor día</span>
@@ -200,7 +208,7 @@ export function HistoryModal({ link, onClose }) {
         )}
 
         <p className="chart-note">
-          Clics por día en UTC, últimos {shownRange} días · {activeDays}{" "}
+          Clics por día en UTC, últimos {shownRange} días · {uniques(unique)} · {activeDays}{" "}
           {activeDays === 1 ? "día con visitas" : "días con visitas"}
         </p>
 

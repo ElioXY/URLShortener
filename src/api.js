@@ -1,6 +1,7 @@
 const MESSAGES = {
   invalid_url: "Ese enlace no parece válido. Prueba con algo como https://ejemplo.com",
   invalid_body: "No hemos podido leer los datos del formulario.",
+  invalid_expiry: "Esa fecha de caducidad no es válida.",
   slug_invalid: "El slug debe tener entre 2 y 32 caracteres: letras, números, guiones o guiones bajos.",
   slug_taken: "Ese slug ya está en uso. Prueba con otro.",
   rate_limited: "Has creado muchos enlaces seguidos. Inténtalo de nuevo más tarde.",
@@ -45,6 +46,7 @@ export const api = {
   list: () => request("/api/links"),
   create: (payload) => request("/api/links", { method: "POST", body: JSON.stringify(payload) }),
   history: (id, days) => request(`/api/links/${encodeURIComponent(id)}/history?days=${days}`),
+  update: (id, payload) => request(`/api/links/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }),
   remove: (id) => request(`/api/links/${encodeURIComponent(id)}`, { method: "DELETE" }),
   logout: () => request("/auth/logout", { method: "POST" }),
 };

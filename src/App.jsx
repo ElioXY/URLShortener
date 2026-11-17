@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Landing from "./components/Landing.jsx";
 import Dashboard from "./components/Dashboard.jsx";
+import QrStudio from "./components/QrStudio.jsx";
 import { api } from "./api.js";
 
 function usePath() {
@@ -35,6 +36,10 @@ export default function App() {
       alive = false;
     };
   }, []);
+
+  if (path.startsWith("/qr")) {
+    return <QrStudio me={me} />;
+  }
 
   if (path.startsWith("/panel")) {
     return <Dashboard me={me} loadingMe={loadingMe} />;

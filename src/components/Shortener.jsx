@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { api, ApiError } from "../api.js";
-import { ArrowRightIcon, CheckIcon, CopyButton, DownloadIcon, ExternalIcon, LinkIcon } from "./ui.jsx";
+import { ArrowRightIcon, CheckIcon, CopyButton, DownloadIcon, ExternalIcon, LinkIcon, ShareButton } from "./ui.jsx";
 import { QrCanvas, downloadPng, downloadSvg } from "./Qr.jsx";
 
 const GENERIC_ERROR = "No hemos podido crear el enlace. Inténtalo de nuevo.";
 
-export default function Shortener({ user, onCreated, variant = "landing" }) {
+export default function Shortener({ user, onCreated, variant = "landing", initialSlug = "" }) {
   const [target, setTarget] = useState("");
-  const [slug, setSlug] = useState("");
-  const [showOptions, setShowOptions] = useState(false);
+  const [slug, setSlug] = useState(initialSlug || "");
+  const [showOptions, setShowOptions] = useState(Boolean(initialSlug));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
@@ -135,6 +135,13 @@ function ResultPanel({ link, user, onClose }) {
 
           <div className="result-actions">
             <CopyButton value={link.shortUrl} label="Copiar enlace" className="btn btn-primary btn-sm" />
+            <ShareButton
+              title="elioxy links"
+              text={link.shortUrl}
+              url={link.shortUrl}
+              label="Compartir"
+              className="btn btn-ghost btn-sm"
+            />
             <a className="btn btn-ghost btn-sm" href={link.shortUrl} target="_blank" rel="noreferrer">
               <ExternalIcon /> Abrir
             </a>
@@ -147,7 +154,8 @@ function ResultPanel({ link, user, onClose }) {
               </>
             ) : (
               <>
-                Guárdalo en tu panel <a href="/auth/github">entrando con GitHub</a>.
+                <CheckIcon size={13} /> Guardado en este navegador. <a href="/auth/github">Entra con GitHub</a> para
+                llevarlo a tu cuenta.
               </>
             )}
           </p>
