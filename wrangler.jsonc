@@ -1,5 +1,6 @@
 {
-  "name": "elioxy-links",
+  
+  "name": "urlshortener",
   "main": "worker/index.js",
   "compatibility_date": "2025-11-01",
   "assets": {
