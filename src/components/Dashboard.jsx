@@ -12,8 +12,10 @@ import {
   TrashIcon,
   formatDate,
   relativeDate,
+  useCountUp,
 } from "./ui.jsx";
 import { QrCanvas, downloadPng, downloadSvg } from "./Qr.jsx";
+import { HistoryModal, Sparkline } from "./History.jsx";
 import Shortener from "./Shortener.jsx";
 import { linkTo } from "../router.js";
 
@@ -41,6 +43,7 @@ export default function Dashboard({ me, loadingMe }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modalLink, setModalLink] = useState(null);
+  const [historyLink, setHistoryLink] = useState(null);
   const [confirming, setConfirming] = useState("");
   const [deleting, setDeleting] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +107,10 @@ export default function Dashboard({ me, loadingMe }) {
     }
   }
 
-  const average = totals.links ? (totals.clicks / totals.links).toFixed(1) : "0";
+  const linksCount = useCountUp(totals.links);
+  const clicksCount = useCountUp(totals.clicks);
+  const averageCount = useCountUp(totals.links ? totals.clicks / totals.links : 0);
+  const average = totals.links ? averageCount.toFixed(1) : "0";
 
   return (
     <>
@@ -115,9 +121,6 @@ export default function Dashboard({ me, loadingMe }) {
         <main className="dash">
           <div className="dash-head">
             <div>
-              <p className="eyebrow">
-                <QrIcon size={14} /> Panel
-              </p>
               <h1>Tus enlaces</h1>
               <p className="dash-sub">Copia, comparte o descarga el QR de cada enlace que has creado.</p>
             </div>
@@ -174,12 +177,12 @@ export default function Dashboard({ me, loadingMe }) {
               <div className="stats">
                 <div className="stat">
                   <span className="stat-label">Enlaces</span>
-                  <strong className="stat-value">{totals.links}</strong>
+                  <strong className="stat-value">{Math.round(linksCount)}</strong>
                   <span className="stat-hint">guardados en tu cuenta</span>
                 </div>
                 <div className="stat">
                   <span className="stat-label">Clics totales</span>
-                  <strong className="stat-value">{totals.clicks}</strong>
+                  <strong className="stat-value">{Math.round(clicksCount)}</strong>
                   <span className="stat-hint">visitas a tus enlaces</span>
                 </div>
                 <div className="stat">
@@ -232,8 +235,12 @@ export default function Dashboard({ me, loadingMe }) {
                   </div>
                 ) : (
                   <ul className="link-list">
-                    {links.map((link) => (
-                      <li className="link-row" key={link.id}>
+                    {links.map((link, index) => (
+                      <li
+                        className="link-row"
+                        key={link.id}
+                        style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}
+                      >
                         <div className="link-main">
                           <div className="link-short">
                             <span className="dot" aria-hidden="true" />
@@ -247,9 +254,17 @@ export default function Dashboard({ me, loadingMe }) {
                         </div>
 
                         <div className="link-stats">
-                          <span className="stat-badge">
-                            <strong>{link.clicks}</strong> clics
-                          </span>
+                          <button
+                            type="button"
+                            className="stat-hist"
+                            onClick={() => setHistoryLink(link)}
+                            title="Ver el histórico de clics"
+                          >
+                            <Sparkline history={link.history} />
+                            <span className="stat-badge">
+                              <strong>{link.clicks}</strong> clics
+                            </span>
+                          </button>
                           <span className="link-date">
                             {link.lastClickedAt
                               ? `Último clic ${relativeDate(link.lastClickedAt)}`
@@ -334,6 +349,7 @@ export default function Dashboard({ me, loadingMe }) {
       </div>
 
       {modalLink && <QrModal link={modalLink} onClose={() => setModalLink(null)} />}
+      {historyLink && <HistoryModal link={historyLink} onClose={() => setHistoryLink(null)} />}
     </>
   );
 }

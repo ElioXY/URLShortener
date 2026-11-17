@@ -44,6 +44,7 @@ export const api = {
   me: () => request("/api/me"),
   list: () => request("/api/links"),
   create: (payload) => request("/api/links", { method: "POST", body: JSON.stringify(payload) }),
+  history: (id, days) => request(`/api/links/${encodeURIComponent(id)}/history?days=${days}`),
   remove: (id) => request(`/api/links/${encodeURIComponent(id)}`, { method: "DELETE" }),
   logout: () => request("/auth/logout", { method: "POST" }),
 };

@@ -131,7 +131,13 @@ export function Brand({ compact = false }) {
   return (
     <span className="brand">
       <span className="brand-mark" aria-hidden="true">
-        <LinkIcon size={17} />
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" focusable="false">
+          <rect x="2" y="2" width="8" height="8" />
+          <rect x="14" y="2" width="8" height="8" />
+          <rect x="2" y="14" width="8" height="8" />
+          <rect x="14" y="14" width="4" height="4" />
+          <rect x="18" y="18" width="4" height="4" />
+        </svg>
       </span>
       <span className="brand-text">elioxy</span>
       {!compact && <span className="brand-pill">links</span>}
@@ -142,14 +148,7 @@ export function Brand({ compact = false }) {
 /* --------------------------------------------------------------- backdrop */
 
 export function Background() {
-  return (
-    <div className="bg" aria-hidden="true">
-      <div className="bg-grid" />
-      <div className="blob blob-a" />
-      <div className="blob blob-b" />
-      <div className="blob blob-c" />
-    </div>
-  );
+  return <div className="bg" aria-hidden="true" />;
 }
 
 /* -------------------------------------------------------------------- nav */
@@ -241,6 +240,38 @@ export function CopyButton({ value, label = "Copiar", className = "btn btn-ghost
       <span>{copied ? "Copiado" : label}</span>
     </button>
   );
+}
+
+/* ---------------------------------------------------------------- motion */
+
+export function useCountUp(value, duration = 900) {
+  const target = Number(value) || 0;
+  const [display, setDisplay] = useState(target);
+  const current = useRef(target);
+
+  useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      current.current = target;
+      setDisplay(target);
+      return undefined;
+    }
+    const from = current.current;
+    const start = performance.now();
+    let frame;
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = from + (target - from) * eased;
+      current.current = next;
+      setDisplay(next);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return display;
 }
 
 /* ------------------------------------------------------------------ dates */

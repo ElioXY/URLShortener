@@ -32,6 +32,8 @@ const RESERVED = new Set([
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,32}$/;
 const SLUG_ALPHABET = "23456789abcdefghijkmnpqrstuvwxyz";
+const HISTORY_RANGES = [7, 30, 90];
+const SPARKLINE_DAYS = 14;
 
 const anonHits = new Map();
 const hmacKeys = new Map();
@@ -103,6 +105,10 @@ function randomSlug() {
   return randomString(7);
 }
 
+function utcDay(timestamp = Date.now()) {
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
 function sameOrigin(request, url) {
   const origin = request.headers.get("Origin");
   if (!origin) return true;
@@ -137,6 +143,14 @@ function ensureSchema(env) {
           clicks INTEGER NOT NULL DEFAULT 0,
           created_at INTEGER NOT NULL,
           last_clicked_at INTEGER
+        )`
+      ),
+      env.DB.prepare(
+        `CREATE TABLE IF NOT EXISTS click_days (
+          link_id TEXT NOT NULL,
+          day TEXT NOT NULL,
+          clicks INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (link_id, day)
         )`
       ),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_links_user ON links(user_id, created_at DESC)`),
@@ -363,13 +377,62 @@ async function handle(request, env, ctx) {
       .bind(session.sub)
       .all();
 
-    const links = (results || []).map((row) => serializeLink(row, baseUrl));
+    const since = utcDay(Date.now() - (SPARKLINE_DAYS - 1) * 24 * 60 * 60 * 1000);
+    const historyResult = await env.DB.prepare(
+      `SELECT c.link_id AS link_id, c.day AS day, c.clicks AS clicks
+       FROM click_days c JOIN links l ON l.id = c.link_id
+       WHERE l.user_id = ? AND c.day >= ?`
+    )
+      .bind(session.sub, since)
+      .all();
+
+    const historyByLink = new Map();
+    for (const entry of historyResult.results || []) {
+      const list = historyByLink.get(entry.link_id) || [];
+      list.push({ day: entry.day, clicks: Number(entry.clicks) || 0 });
+      historyByLink.set(entry.link_id, list);
+    }
+
+    const links = (results || []).map((row) => ({
+      ...serializeLink(row, baseUrl),
+      history: historyByLink.get(row.id) || [],
+    }));
     const totals = links.reduce(
       (acc, link) => ({ links: acc.links + 1, clicks: acc.clicks + Number(link.clicks || 0) }),
       { links: 0, clicks: 0 }
     );
 
     return json({ links, totals });
+  }
+
+  if (pathname.startsWith("/api/links/") && pathname.endsWith("/history") && method === "GET") {
+    if (!env.DB) return fail("db_unavailable", 503);
+    await ensureSchema(env);
+    const session = await readSession(request, env);
+    if (!session) return fail("unauthorized", 401);
+
+    const id = decodeURIComponent(pathname.slice("/api/links/".length, -"history".length)).replace(/\/+$/, "");
+    if (!id || id.length > 80) return fail("not_found", 404);
+
+    const requested = Number.parseInt(url.searchParams.get("days") || "", 10);
+    const days = HISTORY_RANGES.includes(requested) ? requested : 30;
+
+    const link = await env.DB.prepare("SELECT id FROM links WHERE id = ? AND user_id = ?")
+      .bind(id, session.sub)
+      .first();
+    if (!link) return fail("not_found", 404);
+
+    const since = utcDay(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
+    const { results } = await env.DB.prepare(
+      "SELECT day, clicks FROM click_days WHERE link_id = ? AND day >= ? ORDER BY day"
+    )
+      .bind(id, since)
+      .all();
+
+    const series = (results || []).map((row) => ({ day: row.day, clicks: Number(row.clicks) || 0 }));
+    const total = series.reduce((sum, row) => sum + row.clicks, 0);
+
+    return json({ linkId: id, days, series, total });
   }
 
   if (pathname.startsWith("/api/links/") && method === "DELETE") {
@@ -513,11 +576,18 @@ async function handle(request, env, ctx) {
       await ensureSchema(env);
       const row = await env.DB.prepare("SELECT id, target FROM links WHERE slug = ?").bind(slug).first();
       if (row) {
+        const clickedAt = Date.now();
         ctx.waitUntil(
-          env.DB.prepare("UPDATE links SET clicks = clicks + 1, last_clicked_at = ? WHERE id = ?")
-            .bind(Date.now(), row.id)
-            .run()
-            .catch((error) => console.error("click counter failed", error))
+          env.DB.batch([
+            env.DB.prepare("UPDATE links SET clicks = clicks + 1, last_clicked_at = ? WHERE id = ?").bind(
+              clickedAt,
+              row.id
+            ),
+            env.DB.prepare(
+              `INSERT INTO click_days (link_id, day, clicks) VALUES (?, ?, 1)
+               ON CONFLICT(link_id, day) DO UPDATE SET clicks = clicks + 1`
+            ).bind(row.id, utcDay(clickedAt)),
+          ]).catch((error) => console.error("click counter failed", error))
         );
         return new Response(null, {
           status: 302,
