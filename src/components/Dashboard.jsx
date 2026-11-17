@@ -631,6 +631,7 @@ function QrModal({ link, onClose }) {
                   slug: link.slug,
                   sizeMm: Number(labelSize),
                   color: labelColor === "cobalt" ? "#1f2ce0" : "#131311",
+                  expiresAt: link.expiresAt || null,
                 })
               }
             >

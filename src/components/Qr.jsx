@@ -77,7 +77,7 @@ export async function downloadSvg(value, filename) {
  * Printable label at a real physical size: QR, short URL, brand and crop marks.
  * Built as vector SVG so it prints at the exact requested millimetres.
  */
-export async function buildLabelSvg(value, { sizeMm = 60, color = "#131311", caption } = {}) {
+export async function buildLabelSvg(value, { sizeMm = 60, color = "#131311", caption, expiresAt } = {}) {
   const qr = await QRCode.toString(value, {
     type: "svg",
     margin: 0,
@@ -95,6 +95,16 @@ export async function buildLabelSvg(value, { sizeMm = 60, color = "#131311", cap
   const label = raw.length > 34 ? `${raw.slice(0, 33)}…` : raw;
   const fontSize = label.length > 28 ? 8.4 : label.length > 22 ? 9.8 : 11;
 
+  // Temporary posters need the deadline on the label itself.
+  const expiryDate = expiresAt ? new Date(Number(expiresAt)) : null;
+  const expiryText =
+    expiryDate && !Number.isNaN(expiryDate.getTime())
+      ? `Válido hasta ${new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric" })
+          .format(expiryDate)
+          .replace(/\./g, "")}`
+      : "";
+  const metaSize = sizeMm <= 40 ? 6.4 : 7;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizeMm}mm" height="${sizeMm}mm" viewBox="0 0 300 300" role="img" aria-label="Etiqueta con el código QR de ${escapeXml(value)}">
   <rect width="300" height="300" fill="#ffffff" />
   <g stroke="#131311" stroke-width="0.9" fill="none">
@@ -105,13 +115,17 @@ export async function buildLabelSvg(value, { sizeMm = 60, color = "#131311", cap
   </g>
   <rect x="6" y="6" width="288" height="288" fill="none" stroke="#131311" stroke-width="2" />
   <g transform="translate(56 34) scale(${scale.toFixed(4)})" shape-rendering="crispEdges">${inner}</g>
-  <text x="150" y="252" text-anchor="middle" font-family="'IBM Plex Mono', 'DejaVu Sans Mono', monospace" font-size="${fontSize}" fill="#131311">${escapeXml(label)}</text>
-  <text x="150" y="278" text-anchor="middle" font-family="Archivo, 'Helvetica Neue', Arial, sans-serif" font-size="7.5" letter-spacing="0.9" fill="#78786f">elioxy links</text>
+  <text x="150" y="${expiryText ? 246 : 252}" text-anchor="middle" font-family="'IBM Plex Mono', 'DejaVu Sans Mono', monospace" font-size="${fontSize}" fill="#131311">${escapeXml(label)}</text>${
+    expiryText
+      ? `\n  <text x="150" y="265" text-anchor="middle" font-family="'IBM Plex Mono', 'DejaVu Sans Mono', monospace" font-size="${metaSize}" letter-spacing="0.5" fill="${color}">${escapeXml(expiryText)}</text>`
+      : ""
+  }
+  <text x="150" y="${expiryText ? 285 : 278}" text-anchor="middle" font-family="Archivo, 'Helvetica Neue', Arial, sans-serif" font-size="7.5" letter-spacing="0.9" fill="#78786f">elioxy links</text>
 </svg>`;
 }
 
-export async function downloadLabel(value, { slug = "enlace", sizeMm = 60, color = "#131311", caption } = {}) {
-  const svg = await buildLabelSvg(value, { sizeMm, color, caption });
+export async function downloadLabel(value, { slug = "enlace", sizeMm = 60, color = "#131311", caption, expiresAt } = {}) {
+  const svg = await buildLabelSvg(value, { sizeMm, color, caption, expiresAt });
   saveBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), `etiqueta-${slug}-${sizeMm}mm.svg`);
 }
 

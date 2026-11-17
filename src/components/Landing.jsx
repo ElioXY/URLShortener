@@ -16,26 +16,50 @@ export default function Landing({ me }) {
         <Nav me={me} />
 
         <main>
-          <section className="hero">
+          <section className="sheet-hero" id="top">
+            <div className="hero-rail" aria-hidden="true">
+              <span className="rail-stamp">Pliego nº 01 · 2026</span>
+              <dl className="rail-specs">
+                <div>
+                  <dt>Formato</dt>
+                  <dd>302</dd>
+                </div>
+                <div>
+                  <dt>Salida</dt>
+                  <dd>PNG · SVG</dd>
+                </div>
+                <div>
+                  <dt>Papel</dt>
+                  <dd>#F3F3EE</dd>
+                </div>
+              </dl>
+            </div>
+
             <div className="hero-copy">
+              <p className="hero-kicker">Enlaces cortos con QR</p>
               <h1 className="hero-title">
-                Acorta el enlace.
-                <br />
-                Imprime el QR.
+                <span>Acorta el enlace.</span>
+                <span className="line-2">
+                  Imprime el <span className="mark">QR.</span>
+                </span>
               </h1>
               <p className="hero-lede">
-                Pega una URL y te devolvemos un enlace corto con su código QR en PNG o SVG. Con GitHub, el enlace y sus
-                clics se quedan guardados en tu panel.
+                Pega una URL y sale un enlace corto con su código QR. El PNG va a pantalla, el SVG a la imprenta y la
+                etiqueta a la pared.
               </p>
 
               <Shortener user={user} variant="landing" initialSlug={initialSlug} />
 
               <p className="hero-note">
-                Sin cuenta puedes acortar y gestionarlo en este navegador. Con GitHub pasa a tu cuenta, con sus clics.
+                Sin cuenta se guarda en este navegador. Con GitHub pasa a tu panel, con sus clics y su QR.
               </p>
             </div>
 
-            <div className="hero-visual">
+            <div className="hero-plate">
+              <div className="plate-field" aria-hidden="true" />
+              <span className="plate-tag" aria-hidden="true">
+                60 mm · tinta
+              </span>
               <figure className="label-card">
                 <div className="label-head">
                   <span>url.elioxy.us.ci</span>
@@ -48,112 +72,165 @@ export default function Landing({ me }) {
                   <span className="label-url">
                     url.elioxy.us.ci/<b>mi-cafe</b>
                   </span>
-                  <span className="label-caption">Etiqueta de ejemplo. PNG para pantalla, SVG para imprimir.</span>
+                  <span className="label-caption">Etiqueta de ejemplo. 60 mm, marcas de corte incluidas.</span>
                 </figcaption>
               </figure>
+              <span className="plate-stamp" aria-hidden="true">
+                córtese aquí
+              </span>
             </div>
           </section>
 
-          <section className="section" id="funciones">
-            <div className="section-head">
-              <h2>Lo que hace</h2>
-              <p className="lede">Acortar, imprimir el QR, contar clics y guardarlo todo. Nada más.</p>
-            </div>
+          <div className="regla" aria-hidden="true">
+            <span style={{ left: "0" }}>0</span>
+            <span style={{ left: "50%" }}>60</span>
+            <span style={{ right: "0" }}>120 mm</span>
+          </div>
 
-            <div className="spec">
-              <article className="spec-row">
-                <h3>QR en PNG y SVG</h3>
-                <p>Cada enlace trae su código. El PNG va bien en pantalla; el SVG aguanta una impresión grande.</p>
-                <div className="spec-visual">
+          <section className="hoja" id="funciones">
+            <header className="hoja-head">
+              <span className="folio">
+                <span className="folio-num">01 / 03</span>
+                Especificaciones
+              </span>
+              <div>
+                <h2>Lo que hay dentro</h2>
+                <p className="lede">
+                  Cuatro piezas, sin relleno: el código, la cuenta de clics, el nombre del enlace y el panel donde se
+                  guardan.
+                </p>
+              </div>
+            </header>
+
+            <div className="pliego">
+              <article className="pliego-lead">
+                <span className="ficha-idx">01 — Código</span>
+                <h3>Cada enlace sale con su QR.</h3>
+                <div className="qr-specimen">
                   <div className="qr-mini">
-                    <QrCanvas value={EXAMPLE} size={88} />
+                    <QrCanvas value={EXAMPLE} size={132} />
+                  </div>
+                  <div>
+                    <p>
+                      Vectorial para imprimir grande, mapa de bits para pegarlo en un chat. Y si el enlace caduca, la
+                      etiqueta lo dice.
+                    </p>
+                    <div className="spec-tags">
+                      <span>PNG</span>
+                      <span>SVG</span>
+                      <span>40 · 60 · 100 mm</span>
+                    </div>
                   </div>
                 </div>
+                <p className="lead-note">Escala real: 60 mm de lado, marcas de corte en las esquinas.</p>
               </article>
 
-              <article className="spec-row">
-                <h3>Clics por día</h3>
-                <p>Guardamos cada visita con su fecha. En el panel puedes mirar 7, 30 o 90 días de cada enlace.</p>
-                <div className="spec-visual mini-bars" aria-hidden="true">
-                  <span style={{ height: "30%" }} />
-                  <span style={{ height: "54%" }} />
-                  <span style={{ height: "41%" }} />
-                  <span style={{ height: "72%" }} />
-                  <span style={{ height: "60%" }} />
-                  <span style={{ height: "88%" }} />
-                  <span style={{ height: "67%" }} />
-                </div>
-              </article>
+              <div className="pliego-list">
+                <article className="ficha">
+                  <span className="ficha-idx">02</span>
+                  <h3>Clics por día</h3>
+                  <p>Histórico de 7, 30 o 90 días. Los bots y las previsualizaciones no suman.</p>
+                  <div className="ficha-visual mini-bars" aria-hidden="true">
+                    <span style={{ height: "30%" }} />
+                    <span style={{ height: "54%" }} />
+                    <span style={{ height: "41%" }} />
+                    <span style={{ height: "72%" }} />
+                    <span style={{ height: "60%" }} />
+                    <span style={{ height: "88%" }} />
+                    <span style={{ height: "67%" }} />
+                  </div>
+                </article>
 
-              <article className="spec-row">
-                <h3>Panel con GitHub</h3>
-                <p>Entras con tu cuenta y tus enlaces siguen ahí: copiar, abrir, descargar el QR o borrar.</p>
-                <div className="spec-visual mono-list" aria-hidden="true">
-                  <span>
-                    <b>mi-cafe</b> 128
-                  </span>
-                  <span>
-                    <b>menu-2026</b> 42
-                  </span>
-                  <span>
-                    <b>cv</b> 9
-                  </span>
-                </div>
-              </article>
+                <article className="ficha">
+                  <span className="ficha-idx">03</span>
+                  <h3>Slugs que se recuerdan</h3>
+                  <p>Elige el final: <b>mi-cafe</b> dice más que una cadena aleatoria.</p>
+                  <div className="ficha-visual slug-compare" aria-hidden="true">
+                    <span className="slug-line slug-line-dim">x7k2m9p</span>
+                    <span className="slug-line">mi-cafe</span>
+                  </div>
+                </article>
 
-              <article className="spec-row">
-                <h3>Slugs que se recuerdan</h3>
-                <p>Elige el final del enlace: <b>mi-cafe</b> dice más que una cadena aleatoria.</p>
-                <div className="spec-visual slug-compare" aria-hidden="true">
-                  <span className="slug-line slug-line-dim">x7k2m9p</span>
-                  <span className="slug-line">mi-cafe</span>
-                </div>
-              </article>
+                <article className="ficha">
+                  <span className="ficha-idx">04</span>
+                  <h3>Panel con GitHub</h3>
+                  <p>Tus enlaces siguen ahí al cambiar de dispositivo: copiar, editar, pausar o borrar.</p>
+                  <div className="ficha-visual mono-list" aria-hidden="true">
+                    <span>
+                      <b>mi-cafe</b> 128
+                    </span>
+                    <span>
+                      <b>menu-2026</b> 42
+                    </span>
+                    <span>
+                      <b>cv</b> 9
+                    </span>
+                  </div>
+                </article>
+              </div>
             </div>
           </section>
 
-          <section className="section" id="como-funciona">
-            <div className="section-head">
-              <h2>De la URL al papel</h2>
-              <p className="lede">Tres pasos y el QR está listo para pegar donde haga falta.</p>
-            </div>
+          <section className="hoja" id="como-funciona">
+            <header className="hoja-head">
+              <span className="folio">
+                <span className="folio-num">02 / 03</span>
+                Orden de trabajo
+              </span>
+              <div>
+                <h2>De la URL al papel</h2>
+                <p className="lede">Tres pasos. No hay configuración previa ni cuenta obligatoria.</p>
+              </div>
+            </header>
 
-            <ol className="steps">
+            <ol className="orden">
               <li>
-                <span className="step-num">1</span>
-                <h3>Pega la URL</h3>
-                <p>Una tienda, un PDF, una ubicación o un vídeo. Cualquier dirección que quieras compartir.</p>
+                <span className="n">1</span>
+                <div>
+                  <h3>Pega la URL</h3>
+                  <p>Una tienda, un PDF, una ubicación o un vídeo. Cualquier dirección que quieras compartir.</p>
+                </div>
+                <span className="salida">Entrada</span>
               </li>
               <li>
-                <span className="step-num">2</span>
-                <h3>Elige el slug</h3>
-                <p>Escríbelo tú o deja que generemos uno corto y difícil de adivinar.</p>
+                <span className="n">2</span>
+                <div>
+                  <h3>Decide el final</h3>
+                  <p>Escríbelo tú o deja que salga uno corto y difícil de adivinar.</p>
+                </div>
+                <span className="salida">Slug</span>
               </li>
               <li>
-                <span className="step-num">3</span>
-                <h3>Copia el enlace o el QR</h3>
-                <p>El QR se descarga en PNG o en SVG, según vaya a una pantalla o a una imprenta.</p>
+                <span className="n">3</span>
+                <div>
+                  <h3>Llévate el enlace o el QR</h3>
+                  <p>PNG para una pantalla, SVG para una imprenta, etiqueta para pegar en la puerta.</p>
+                </div>
+                <span className="salida">Salida</span>
               </li>
             </ol>
           </section>
 
-          <section className="cta-band">
-            <div className="cta-copy">
-              <h2>Guarda los enlaces y no pierdas la cuenta.</h2>
-              <p>Entra con GitHub y tenlos a mano con sus clics y su QR desde cualquier dispositivo.</p>
+          <section className="cupon">
+            <div>
+              <h2>Guarda los enlaces en tu cuenta.</h2>
+              <p>
+                Entra con GitHub y llévatelos a cualquier dispositivo, con sus clics, su histórico y su QR.
+                {user ? " Ya estás dentro." : ""}
+              </p>
             </div>
-            <div className="cta-actions">
+            <div className="cupon-actions">
               {user ? (
-                <a className="btn btn-yellow" href="/panel" onClick={(event) => linkTo(event, "/panel")}>
+                <a className="btn" href="/panel" onClick={(event) => linkTo(event, "/panel")}>
                   Ir a mi panel <ArrowRightIcon />
                 </a>
               ) : (
-                <a className="btn btn-yellow" href="/auth/github">
+                <a className="btn" href="/auth/github">
                   <GitHubIcon /> Entrar con GitHub
                 </a>
               )}
               <a
-                className="btn btn-outline-light"
+                className="btn btn-ghost"
                 href="#top"
                 onClick={(event) => {
                   event.preventDefault();
@@ -163,26 +240,38 @@ export default function Landing({ me }) {
                 Crear un enlace
               </a>
             </div>
+            <span className="sello" aria-hidden="true">
+              Sin cuentas
+              <br />
+              de analítica
+            </span>
           </section>
         </main>
 
-        <footer className="footer">
-          <div className="footer-inner">
-            <div className="footer-brand">
+        <footer className="colofon">
+          <div className="colofon-top">
+            <div className="colofon-brand">
               <a className="brand-link" href="/" onClick={(event) => linkTo(event, "/")}>
                 <Brand />
               </a>
-              <p>Enlaces cortos y códigos QR, sin más.</p>
+              <p>Enlaces cortos y códigos QR. Nada más.</p>
             </div>
-            <div className="footer-links">
+            <div className="colofon-links">
               <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
                 Panel
+              </a>
+              <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
+                Generador QR
               </a>
               <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
                 GitHub
               </a>
-              <span className="footer-domain">url.elioxy.us.ci</span>
             </div>
+          </div>
+          <div className="colofon-bottom">
+            <span>Colofón · Archivo + IBM Plex Mono</span>
+            <span>tinta #131311 · cobalto #1F2CE0 · amarillo #FFD23F · papel #F3F3EE</span>
+            <span>url.elioxy.us.ci</span>
           </div>
         </footer>
       </div>

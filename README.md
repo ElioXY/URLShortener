@@ -8,7 +8,8 @@ Pensado para publicarse en `url.elioxy.us.ci`.
 - Panel con tus enlaces: copiar, abrir, QR, editar, borrar, clics totales e histórico diario.
 - Histórico de clics por enlace: sparkline de 14 días en cada fila y gráfico con selector de 7, 30 o 90 días en un modal.
 - Edición del destino y del slug, pausa sin perder clics y fecha de caducidad.
-- Etiqueta imprimible en SVG a tamaño real (40, 60 o 100 mm), con marcas de corte y QR vectorial.
+- Etiqueta imprimible en SVG a tamaño real (40, 60 o 100 mm), con marcas de corte y QR vectorial. Si el
+  enlace tiene fecha de caducidad, la etiqueta imprime debajo «Válido hasta …» para carteles temporales.
 - Generador de QR independiente en `/qr`: enlace, red WiFi, texto libre y contacto (vCard), con PNG, SVG y etiqueta.
 - Compartir con la hoja nativa del sistema (`navigator.share`) y copia al portapapeles como respaldo; también
   se puede copiar el QR como imagen PNG.
