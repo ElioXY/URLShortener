@@ -250,27 +250,12 @@ function statusPage({ status, kind, slug }) {
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${copy.code} · ${escapeHtml(copy.title)} | elioxy links</title>
 <meta name="robots" content="noindex">
+<script src="/theme-boot.js"></script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#f3f3ee;color:#131311;font-family:Archivo,system-ui,sans-serif;line-height:1.55}
-.wrap{max-width:720px;margin:0 auto;padding:28px 22px 60px}
-.brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#131311;font-weight:800;letter-spacing:-.03em}
-.mark{display:grid;place-items:center;width:26px;height:26px;background:#1f2ce0}
-.code{margin:56px 0 0;color:#1f2ce0;font-size:clamp(3rem,10vw,6rem);font-weight:800;line-height:1;letter-spacing:-.05em}
-h1{margin:6px 0 10px;font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.03em}
-p{margin:0 0 20px;color:#4b4b45;max-width:46ch}
-.slug{font-family:"IBM Plex Mono",monospace;font-size:.85rem;border:1px solid rgba(19,19,17,.18);padding:3px 6px}
-.btn{display:inline-block;padding:12px 18px;background:#131311;color:#f3f3ee;text-decoration:none;font-weight:600;border:2px solid #131311}
-.btn:hover{background:#1f2ce0;border-color:#1f2ce0}
-.home{display:inline-block;margin-left:14px;color:#1f2ce0;font-size:.85rem}
-hr{border:0;border-top:2px solid #131311;margin:40px 0 14px}
-.foot{font-size:.75rem;color:#78786f;font-family:"IBM Plex Mono",monospace}
-</style></head>
+<link rel="stylesheet" href="/status.css">
+</head>
 <body><div class="wrap">
-<a class="brand" href="/"><span class="mark"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><rect x="14" y="14" width="4" height="4"/><rect x="18" y="18" width="4" height="4"/></svg></span>elioxy <span style="font-weight:400;color:#78786f">/ links</span></a>
+<a class="brand" href="/"><span class="mark"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><rect x="14" y="14" width="4" height="4"/><rect x="18" y="18" width="4" height="4"/></svg></span>elioxy <span class="brand-sub">/ links</span></a>
 <p class="code">${copy.code}</p>
 <h1>${escapeHtml(copy.title)}</h1>
 <p>${escapeHtml(copy.text)}</p>
@@ -566,11 +551,40 @@ async function serveAssets(env, request, url) {
 
 /* ------------------------------------------------------------------ routing */
 
+async function avatarProxy(login, headOnly) {
+  let upstream;
+  try {
+    upstream = await fetch(`https://avatars.githubusercontent.com/${login}?size=96`, {
+      headers: { accept: "image/*", "user-agent": "elioxy-links" },
+      cf: { cacheEverything: true, cacheTtl: 86400 },
+    });
+  } catch (error) {
+    return new Response(null, { status: 502 });
+  }
+
+  const type = upstream.headers.get("content-type") || "";
+  if (!upstream.ok || !type.startsWith("image/")) return new Response(null, { status: 404 });
+
+  return new Response(headOnly ? null : upstream.body, {
+    status: 200,
+    headers: {
+      "content-type": type,
+      "cache-control": "public, max-age=86400",
+      "x-robots-tag": "noindex",
+    },
+  });
+}
+
 async function handle(request, env, ctx) {
   const url = new URL(request.url);
   const { pathname } = url;
   const baseUrl = (env.APP_ORIGIN || url.origin).replace(/\/+$/, "");
   const method = request.method.toUpperCase();
+
+  const avatarMatch = /^\/avatar\/([A-Za-z0-9-]{1,39})$/.exec(pathname);
+  if (avatarMatch && (method === "GET" || method === "HEAD")) {
+    return avatarProxy(avatarMatch[1], method === "HEAD");
+  }
 
   if (pathname === "/api/health") {
     return json({ ok: true, database: Boolean(env.DB) });

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, ApiError } from "../api.js";
 import { ArrowRightIcon, CheckIcon, CopyButton, DownloadIcon, ExternalIcon, LinkIcon, ShareButton } from "./ui.jsx";
-import { QrCanvas, downloadPng, downloadSvg } from "./Qr.jsx";
+import { QrCard, downloadPng, downloadSvg } from "./Qr.jsx";
 
 const GENERIC_ERROR = "No hemos podido crear el enlace. Inténtalo de nuevo.";
 
@@ -162,21 +162,19 @@ function ResultPanel({ link, user, onClose }) {
         </div>
 
         <div className="result-qr">
-          <div className="qr-frame">
-            <QrCanvas value={link.shortUrl} size={168} />
-          </div>
+          <QrCard value={link.shortUrl} expiresAt={link.expiresAt} size={190} />
           <div className="qr-actions">
             <button
               type="button"
               className="btn btn-ghost btn-xs"
-              onClick={() => downloadPng(link.shortUrl, `qr-${link.slug}`)}
+              onClick={() => downloadPng(link.shortUrl, `qr-${link.slug}`, { expiresAt: link.expiresAt })}
             >
               <DownloadIcon size={14} /> PNG
             </button>
             <button
               type="button"
               className="btn btn-ghost btn-xs"
-              onClick={() => downloadSvg(link.shortUrl, `qr-${link.slug}`)}
+              onClick={() => downloadSvg(link.shortUrl, `qr-${link.slug}`, { expiresAt: link.expiresAt })}
             >
               <DownloadIcon size={14} /> SVG
             </button>

@@ -8,6 +8,7 @@ import {
   ExternalIcon,
   GitHubIcon,
   Nav,
+  avatarSrc,
   CopyImageNotice,
   QrIcon,
   ShareButton,
@@ -16,7 +17,7 @@ import {
   relativeDate,
   useCountUp,
 } from "./ui.jsx";
-import { QrCanvas, copyQrPng, downloadLabel, downloadPng, downloadSvg } from "./Qr.jsx";
+import { QrCard, copyQrPng, downloadLabel, downloadPng, downloadSvg } from "./Qr.jsx";
 import { HistoryModal, Sparkline } from "./History.jsx";
 import Shortener from "./Shortener.jsx";
 import { linkTo } from "../router.js";
@@ -63,6 +64,8 @@ export default function Dashboard({ me, loadingMe }) {
   const [confirming, setConfirming] = useState("");
   const [deleting, setDeleting] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const avatar = avatarSrc(user);
+  const [failedAvatar, setFailedAvatar] = useState("");
 
   const authMessage = useMemo(() => {
     const code = new URLSearchParams(window.location.search).get("auth");
@@ -149,7 +152,11 @@ export default function Dashboard({ me, loadingMe }) {
             </div>
             {user && (
               <div className="dash-user">
-                {user.avatar ? <img src={user.avatar} alt="" width="34" height="34" /> : null}
+                {avatar && failedAvatar !== avatar ? (
+                  <img src={avatar} alt="" width="30" height="30" onError={() => setFailedAvatar(avatar)} />
+                ) : (
+                  <span className="avatar-fallback">{(user.name || user.login || "?").slice(0, 1).toUpperCase()}</span>
+                )}
                 <div>
                   <strong>{user.name || user.login}</strong>
                   <span>@{user.login}</span>
@@ -534,7 +541,7 @@ function QrModal({ link, onClose }) {
   const [copyFailed, setCopyFailed] = useState(false);
 
   async function handleCopyQr() {
-    const ok = await copyQrPng(link.shortUrl);
+    const ok = await copyQrPng(link.shortUrl, { expiresAt: link.expiresAt });
     if (!ok) {
       setCopyFailed(true);
       return;
@@ -571,22 +578,26 @@ function QrModal({ link, onClose }) {
         </button>
         <p className="modal-eyebrow">Código QR</p>
         <h3 className="modal-title">/{link.slug}</h3>
-        <div className="qr-frame qr-frame-lg">
-          <QrCanvas value={link.shortUrl} size={236} />
-        </div>
+        <QrCard
+          value={link.shortUrl}
+          caption={link.shortUrl.replace(/^https?:\/\//, "")}
+          expiresAt={link.expiresAt}
+          size={280}
+          className="qr-card-preview qr-modal-preview"
+        />
         <p className="modal-link">{link.shortUrl.replace(/^https?:\/\//, "")}</p>
         <div className="modal-actions">
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            onClick={() => downloadPng(link.shortUrl, `qr-${link.slug}`)}
+            onClick={() => downloadPng(link.shortUrl, `qr-${link.slug}`, { expiresAt: link.expiresAt })}
           >
             <DownloadIcon /> Descargar PNG
           </button>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            onClick={() => downloadSvg(link.shortUrl, `qr-${link.slug}`)}
+            onClick={() => downloadSvg(link.shortUrl, `qr-${link.slug}`, { expiresAt: link.expiresAt })}
           >
             SVG
           </button>
@@ -602,7 +613,11 @@ function QrModal({ link, onClose }) {
             className="btn btn-ghost btn-sm"
           />
         </div>
-        {copyFailed && <CopyImageNotice onDownload={() => downloadPng(link.shortUrl, `qr-${link.slug}`)} />}
+        {copyFailed && (
+          <CopyImageNotice
+            onDownload={() => downloadPng(link.shortUrl, `qr-${link.slug}`, { expiresAt: link.expiresAt })}
+          />
+        )}
 
         <div className="label-block">
           <p className="label-block-title">Etiqueta imprimible</p>

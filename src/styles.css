@@ -3,6 +3,31 @@
    papel + tinta + cobalto + amarillo
    ========================================================================= */
 
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 300 900;
+  font-stretch: 75% 125%;
+  font-display: swap;
+  src: url("/fonts/archivo-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/plex-mono-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/plex-mono-500.woff2") format("woff2");
+}
+
 :root {
   --paper: #f3f3ee;
   --paper-2: #e8e8e0;
@@ -1039,14 +1064,6 @@ section[id] {
   text-align: center;
 }
 
-.qr-frame {
-  display: inline-block;
-  padding: 8px;
-  background: #fff;
-  border: 2px solid var(--line);
-}
-
-.qr-frame canvas,
 .qr-canvas {
   display: block;
   width: 100%;
@@ -1105,6 +1122,12 @@ section[id] {
   width: 30px;
   height: 30px;
   object-fit: cover;
+}
+
+.dash-user .avatar-fallback {
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
 }
 
 .dash-user strong {
@@ -1747,17 +1770,6 @@ section[id] {
   overflow-wrap: anywhere;
 }
 
-.qr-frame-lg {
-  display: block;
-  margin: 0 auto;
-  padding: 10px;
-  text-align: center;
-}
-
-.qr-frame-lg canvas {
-  margin: 0 auto;
-}
-
 .modal-link {
   margin: 12px 0 0;
   text-align: center;
@@ -1945,54 +1957,8 @@ section[id] {
 }
 
 /* ----------------------------------------------------------------- motion */
-
-.hero-copy > * {
-  animation: hero-in 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-}
-
-.hero-title {
-  animation-delay: 0.02s;
-}
-
-.hero-lede {
-  animation-delay: 0.09s;
-}
-
-.shortener--landing {
-  animation-delay: 0.16s;
-}
-
-.hero-note {
-  animation-delay: 0.23s;
-}
-
-.label-card {
-  animation: label-in 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) 0.16s both;
-}
-
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    translate: 0 16px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-@keyframes label-in {
-  from {
-    opacity: 0;
-    translate: 0 14px;
-    rotate: 0deg;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-    rotate: -1.5deg;
-  }
-}
+/* La entrada de cada bloque la lleva la regla de .shell > main > *; aquí no se
+   repiten animaciones por dentro para que nada entre dos veces. */
 
 @keyframes row-in {
   from {
@@ -2169,26 +2135,19 @@ section[id] {
   border: 2px solid var(--line);
 }
 
+/* La previsualización ya es la tarjeta completa: el marco lo pone ella. */
 .qr-sheet {
   display: grid;
   place-items: center;
   width: 100%;
-  max-width: 300px;
-  aspect-ratio: 1;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid var(--line-soft);
-}
-
-.qr-sheet canvas {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 .qr-sheet.is-empty {
+  max-width: 300px;
+  aspect-ratio: 1;
   padding: 24px;
-  border-style: dashed;
+  background: #fff;
+  border: 1px dashed var(--line-soft);
   color: var(--ink-3);
   font-size: 0.8rem;
   text-align: center;
@@ -3118,4 +3077,491 @@ section[id] {
     display: block;
     margin-top: 4px;
   }
+}
+
+/* =============================================================== tema */
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1.5px solid var(--line-soft);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #121210;
+  --paper-2: #1e1d19;
+  --card: #1a1916;
+  --ink: #f2f0e8;
+  --ink-2: #c4c1b4;
+  --ink-3: #8e8b7f;
+  --line: #f2f0e8;
+  --line-soft: rgba(242, 240, 232, 0.22);
+  --cobalt: #8f97ff;
+  --cobalt-dark: #737cff;
+  --danger: #ff6f76;
+}
+
+[data-theme="dark"] ::selection {
+  background: var(--cobalt);
+  color: #121210;
+}
+
+[data-theme="dark"] .brand-mark,
+[data-theme="dark"] .avatar-fallback {
+  color: #121210;
+}
+
+[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+  color: #121210;
+}
+
+[data-theme="dark"] .btn.is-copied {
+  color: #121210;
+}
+
+[data-theme="dark"] .hero-title .mark {
+  color: #121210;
+}
+
+[data-theme="dark"] .plate-field {
+  background: #2b35d8;
+}
+
+[data-theme="dark"] .plate-field::before {
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+[data-theme="dark"] .label-card {
+  background: #f4f2e9;
+  color: #131311;
+}
+
+[data-theme="dark"] .label-card .label-head {
+  color: #4b4b45;
+}
+
+[data-theme="dark"] .label-card .label-caption {
+  color: #6c6a60;
+}
+
+[data-theme="dark"] .label-card .label-url b {
+  color: #131311;
+}
+
+[data-theme="dark"] .cupon,
+[data-theme="dark"] .cupon h2 {
+  color: #131311;
+}
+
+[data-theme="dark"] .cupon p {
+  color: #3b3b33;
+}
+
+[data-theme="dark"] .cupon .btn {
+  background: #131311;
+  border-color: #131311;
+  color: #ffd23f;
+}
+
+[data-theme="dark"] .cupon .btn:hover:not(:disabled) {
+  background: #f4f2e9;
+  color: #131311;
+}
+
+[data-theme="dark"] .cupon .btn-ghost {
+  background: transparent;
+  color: #131311;
+}
+
+[data-theme="dark"] .cupon .btn-ghost:hover:not(:disabled) {
+  background: #131311;
+  color: #ffd23f;
+}
+
+[data-theme="dark"] .sello,
+[data-theme="dark"] .sello::before {
+  border-color: #131311;
+  color: #131311;
+}
+
+[data-theme="dark"] .slug-line,
+[data-theme="dark"] .confirm,
+[data-theme="dark"] .form-error {
+  background: var(--card);
+}
+
+[data-theme="dark"] .slug-line-dim {
+  background: transparent;
+}
+
+[data-theme="dark"] .link-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .label-qr,
+[data-theme="dark"] .qr-mini {
+  background: #ffffff;
+}
+
+[data-theme="dark"] .qr-sheet.is-empty {
+  background: var(--card);
+  color: var(--ink-3);
+}
+
+[data-theme="dark"] .chart-bar,
+[data-theme="dark"] .spark-bar {
+  background: var(--cobalt);
+}
+
+[data-theme="dark"] .nav-user:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* =========================================================== movimiento */
+/* Entradas de página y respuesta física de botones: breve, pero se nota. */
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes page-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nav-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nav-sweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  65% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.shell > main {
+  animation: page-fade 0.3s ease both;
+}
+
+.shell > main > * {
+  animation: page-rise 0.5s cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+.shell > main > *:nth-child(1) {
+  animation-delay: 0.03s;
+}
+
+.shell > main > *:nth-child(2) {
+  animation-delay: 0.09s;
+}
+
+.shell > main > *:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.shell > main > *:nth-child(4) {
+  animation-delay: 0.21s;
+}
+
+.shell > main > *:nth-child(n + 5) {
+  animation-delay: 0.26s;
+}
+
+.shell > .nav {
+  animation: nav-drop 0.38s cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+.shell > .nav::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--cobalt);
+  transform-origin: left center;
+  animation: nav-sweep 0.9s cubic-bezier(0.22, 0.8, 0.2, 1) both;
+  pointer-events: none;
+}
+
+.shell > .footer,
+.shell > .colofon {
+  animation: page-rise 0.5s 0.12s cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+/* Botones: se levantan al pasar y se hunden al pulsar. */
+
+.btn,
+.icon-btn,
+.studio-tab,
+.link-row,
+.nav-user {
+  transition-property: background, color, border-color, transform, box-shadow;
+  transition-duration: 0.18s;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.btn:active:not(:disabled) {
+  translate: none;
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 var(--ink);
+  transition-duration: 0.05s;
+}
+
+.btn svg {
+  transition: transform 0.18s ease;
+}
+
+.btn:hover:not(:disabled) svg {
+  transform: translateX(2px) scale(1.08);
+}
+
+.icon-btn:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.nav-user:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.nav-user:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+  transition-duration: 0.05s;
+}
+
+.icon-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+  transition-duration: 0.05s;
+}
+
+.theme-toggle {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle:hover {
+  transform: rotate(-12deg) scale(1.1);
+}
+
+.theme-toggle:active {
+  transform: rotate(10deg) scale(0.9);
+  transition-duration: 0.06s;
+}
+
+.studio-tab:hover {
+  transform: translateY(-1px);
+}
+
+.studio-tab:active {
+  transform: translateY(1px) scale(0.97);
+  transition-duration: 0.05s;
+}
+
+.link-row:hover {
+  transform: translateX(3px);
+}
+
+.brand-mark {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.brand-link:hover .brand-mark {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+/* Controles que no llevan .btn ni .icon-btn: mismo gesto de levantar y hundirse. */
+
+:is(
+  .modal-close,
+  .result-close,
+  .range-btn,
+  .stat-hist,
+  .logout,
+  .link-toggle,
+  .copy-notice-action,
+  .result-link,
+  .colofon-links a,
+  .footer-inner a,
+  .brand-link
+) {
+  transition-property: background, color, border-color, transform, box-shadow;
+  transition-duration: 0.18s;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.link-toggle {
+  padding: 2px 4px;
+  margin-inline: -4px;
+}
+
+.colofon-links a,
+.footer-inner a {
+  display: inline-block;
+  padding: 2px 4px;
+}
+
+.result-link {
+  display: inline-block;
+}
+
+.brand-link {
+  display: inline-flex;
+  padding: 3px 5px;
+  margin: -3px -5px;
+}
+
+:is(
+    .modal-close,
+    .result-close,
+    .range-btn,
+    .stat-hist,
+    .logout,
+    .link-toggle,
+    .copy-notice-action,
+    .result-link,
+    .colofon-links a,
+    .footer-inner a,
+    .brand-link
+  ):hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+:is(
+    .modal-close,
+    .result-close,
+    .range-btn,
+    .stat-hist,
+    .logout,
+    .link-toggle,
+    .copy-notice-action,
+    .result-link,
+    .colofon-links a,
+    .footer-inner a,
+    .brand-link
+  ):active {
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 var(--ink);
+  transition-duration: 0.05s;
+}
+
+/* Enlaces de la nav: subrayado que se dibuja de izquierda a derecha. */
+
+.nav-links a {
+  padding: 4px 5px;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 2px;
+  transition: color 0.15s ease, background-size 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.nav-links a:hover {
+  border-bottom-color: transparent;
+  background-size: 100% 2px;
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.nav-links a:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 var(--ink);
+  transition-duration: 0.05s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+      .btn,
+      .icon-btn,
+      .theme-toggle,
+      .studio-tab,
+      .link-row,
+      .nav-user,
+      .modal-close,
+      .result-close,
+      .range-btn,
+      .stat-hist,
+      .logout,
+      .link-toggle,
+      .copy-notice-action,
+      .result-link,
+      .colofon-links a,
+      .footer-inner a,
+      .nav-links a,
+      .brand-link
+    ):is(:hover, :active),
+  .brand-link:hover .brand-mark {
+    transform: none;
+  }
+}
+
+/* ----------------------------------------------- previsualización del QR */
+/* Misma tarjeta que el PNG/SVG descargado, en vectorial y con las fuentes de la web. */
+
+.qr-card-preview {
+  width: 100%;
+  line-height: 0;
+}
+
+.qr-card-preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.qr-modal-preview {
+  margin: 0 auto;
 }

@@ -15,6 +15,9 @@
       "database_id": "0c33a310-95de-492c-b250-154f910ea9d6"
     }
   ],
+  "vars": {
+    "GITHUB_CLIENT_ID": "Ov23lia1cqjM40EBROc1"
+  },
   "observability": {
     "enabled": true
   }

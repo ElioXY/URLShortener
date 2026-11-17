@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Background, CopyButton, CopyImageNotice, DownloadIcon, Nav, ShareButton } from "./ui.jsx";
-import { QrCanvas, copyQrPng, downloadLabel, downloadPng, downloadSvg } from "./Qr.jsx";
+import { QrCard, copyQrPng, downloadLabel, downloadPng, downloadSvg } from "./Qr.jsx";
 import { linkTo } from "../router.js";
 
 const TYPES = [
@@ -9,6 +9,8 @@ const TYPES = [
   { id: "texto", label: "Texto" },
   { id: "contacto", label: "Contacto" },
 ];
+
+const EYEBROWS = { url: "ENLACE CORTO", wifi: "WI-FI", texto: "TEXTO", contacto: "CONTACTO" };
 
 function escapeWifi(value) {
   return String(value).replace(/([\\;,:"])/g, "\\$1");
@@ -87,7 +89,7 @@ export default function QrStudio({ me }) {
 
   async function handleCopyQr() {
     if (!payload) return;
-    const ok = await copyQrPng(payload);
+    const ok = await copyQrPng(payload, { caption, eyebrow: EYEBROWS[type] });
     if (!ok) {
       setCopyFailed(true);
       return;
@@ -236,7 +238,7 @@ export default function QrStudio({ me }) {
                       <input
                         className="input"
                         type="email"
-                        placeholder="hola@elioxy.us.ci"
+                        placeholder="hello@elioxy.us.ci"
                         value={contact.email}
                         onChange={(event) => setContact({ ...contact, email: event.target.value })}
                       />
@@ -280,7 +282,11 @@ export default function QrStudio({ me }) {
 
             <aside className="studio-preview" aria-live="polite">
               <div className={`qr-sheet${payload ? "" : " is-empty"}`}>
-                {payload ? <QrCanvas value={payload} size={256} /> : <span>Completa los datos para ver el código</span>}
+                {payload ? (
+                  <QrCard value={payload} caption={caption} eyebrow={EYEBROWS[type]} size={280} />
+                ) : (
+                  <span>Completa los datos para ver el código</span>
+                )}
               </div>
               <p className="studio-caption">{caption || "Sin contenido todavía"}</p>
 
@@ -290,11 +296,15 @@ export default function QrStudio({ me }) {
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
-                      onClick={() => downloadPng(payload, `qr-${type}`)}
+                      onClick={() => downloadPng(payload, `qr-${type}`, { caption, eyebrow: EYEBROWS[type] })}
                     >
                       <DownloadIcon /> PNG
                     </button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => downloadSvg(payload, `qr-${type}`)}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => downloadSvg(payload, `qr-${type}`, { caption, eyebrow: EYEBROWS[type] })}
+                    >
                       SVG
                     </button>
                     <button
@@ -321,7 +331,11 @@ export default function QrStudio({ me }) {
                       className="btn btn-ghost btn-sm"
                     />
                   </div>
-                  {copyFailed && <CopyImageNotice onDownload={() => downloadPng(payload, `qr-${type}`)} />}
+                  {copyFailed && (
+                    <CopyImageNotice
+                      onDownload={() => downloadPng(payload, `qr-${type}`, { caption, eyebrow: EYEBROWS[type] })}
+                    />
+                  )}
                 </>
               )}
             </aside>

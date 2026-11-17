@@ -104,6 +104,19 @@ export const ShareIcon = (props) => (
   </Svg>
 );
 
+export const MoonIcon = (props) => (
+  <Svg {...props}>
+    <path d="M20 14.5A8 8 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+  </Svg>
+);
+
+export const SunIcon = (props) => (
+  <Svg {...props}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
+  </Svg>
+);
+
 export const EditIcon = (props) => (
   <Svg {...props}>
     <path d="M4 20h4l10.7-10.7a2.1 2.1 0 0 0-3-3L5 17v3z" />
@@ -166,10 +179,72 @@ export function Background() {
   return <div className="bg" aria-hidden="true" />;
 }
 
+/* ------------------------------------------------------------------- theme */
+
+const THEME_KEY = "elioxy_theme";
+
+/** Foto servida por el propio Worker: así no la bloquea una CSP con img-src 'self'. */
+export function avatarSrc(user) {
+  return user?.login ? `/avatar/${encodeURIComponent(user.login)}` : "";
+}
+
+export function ThemeToggle() {
+  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === "dark");
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    function followSystem(event) {
+      try {
+        if (localStorage.getItem(THEME_KEY)) return;
+      } catch {
+        /* sin almacenamiento: manda el sistema */
+      }
+      const next = event.matches;
+      setDark(next);
+      if (next) document.documentElement.dataset.theme = "dark";
+      else document.documentElement.removeAttribute("data-theme");
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", next ? "#131211" : "#f3f3ee");
+    }
+    media.addEventListener("change", followSystem);
+    return () => media.removeEventListener("change", followSystem);
+  }, []);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    if (next) document.documentElement.dataset.theme = "dark";
+    else document.documentElement.removeAttribute("data-theme");
+    try {
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+    } catch {
+      /* private mode: the theme just won't persist */
+    }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", next ? "#131211" : "#f3f3ee");
+  }
+
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={toggle}
+      aria-pressed={dark}
+      aria-label={dark ? "Cambiar al tema claro" : "Cambiar al tema oscuro"}
+      title={dark ? "Tema claro" : "Tema oscuro"}
+    >
+      {dark ? <SunIcon /> : <MoonIcon />}
+    </button>
+  );
+}
+
 /* -------------------------------------------------------------------- nav */
 
 export function Nav({ me, variant = "landing" }) {
   const user = me?.user;
+  const avatar = avatarSrc(user);
+  const [failedAvatar, setFailedAvatar] = useState("");
+  const showAvatar = Boolean(avatar) && failedAvatar !== avatar;
   return (
     <header className="nav">
       <div className="nav-inner">
@@ -191,10 +266,11 @@ export function Nav({ me, variant = "landing" }) {
         )}
 
         <div className="nav-actions">
+          <ThemeToggle />
           {user ? (
             <a className="nav-user" href="/panel" onClick={(event) => linkTo(event, "/panel")}>
-              {user.avatar ? (
-                <img src={user.avatar} alt="" width="26" height="26" />
+              {showAvatar ? (
+                <img src={avatar} alt="" width="26" height="26" onError={() => setFailedAvatar(avatar)} />
               ) : (
                 <span className="avatar-fallback">{(user.name || user.login || "?").slice(0, 1).toUpperCase()}</span>
               )}
