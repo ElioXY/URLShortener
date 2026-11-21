@@ -642,7 +642,7 @@ function rewriteSocialMeta(response, url, client, nonce) {
 async function serveAssets(env, request, url, nonce) {
   const response = await env.ASSETS.fetch(request);
   if (request.method !== "GET") return response;
-  return rewriteSocialMeta(response, url, adsenseClient(env), nonce);
+  return rewriteSocialMeta(response, url, adsEligible(url) ? adsenseClient(env) : null, nonce);
 }
 
 /* ------------------------------------------------------------------ routing */
@@ -1106,7 +1106,7 @@ async function handle(request, env, ctx, nonce) {
 
     const isFile = /\.[a-zA-Z0-9]+$/.test(pathname);
     const isSpaRoute =
-        pathname === "/" || ["/panel", "/qr", "/privacidad", "/terminos"].includes(pathname.replace(/\/+$/, ""));
+      pathname === "/" || ["/panel", "/qr", "/privacidad", "/terminos"].includes(pathname.replace(/\/+$/, ""));
     if (!isFile && !isSpaRoute && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/")) {
       const attempted = decodeURIComponent(pathname).replace(/^\/+|\/+$/g, "").slice(0, 60);
       return statusPage({ status: 404, kind: "missing", slug: attempted }, nonce);
