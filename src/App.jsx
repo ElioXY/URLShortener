@@ -3,6 +3,7 @@ import Landing from "./components/Landing.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import QrStudio from "./components/QrStudio.jsx";
 import Privacy from "./components/Privacy.jsx";
+import Terms from "./components/Terms.jsx";
 import { api } from "./api.js";
 
 function usePath() {
@@ -41,7 +42,11 @@ export default function App() {
   if (path.startsWith("/privacidad")) {
     return <Privacy me={me} />;
   }
-
+  
+  if (path.startsWith("/terminos")) {
+    return <Terms me={me} />;
+  }
+  
   if (path.startsWith("/qr")) {
     return <QrStudio me={me} />;
   }
