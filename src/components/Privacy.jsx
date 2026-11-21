@@ -198,6 +198,9 @@ export default function Privacy({ me }) {
               <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
                 Privacidad
               </a>
+              <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
+                Términos
+              </a>
               <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
                 GitHub
               </a>
