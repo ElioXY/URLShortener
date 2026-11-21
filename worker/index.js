@@ -26,6 +26,7 @@ const RESERVED = new Set([
   "favicon.ico",
   "favicon.svg",
   "robots.txt",
+  "ads.txt",
   "sitemap.xml",
   "index.html",
   "_headers",
@@ -509,7 +510,28 @@ function redirectTo(location) {
 
 const OG_IMAGE_PATH = "/og.png";
 
-function rewriteSocialMeta(response, url) {
+/* ---------------------------------------------------------------- adsense */
+
+// AdSense stopped accepting subdomains as sites in 2023: the account entry is
+// the registrable domain (elioxy.us.ci) and the ads run on this subdomain.
+// Nothing is served until ADSENSE_CLIENT holds the publisher ID.
+function adsenseClient(env) {
+  const match = /^(?:ca-)?(pub-\d{10,20})$/.exec(String(env.ADSENSE_CLIENT || "").trim());
+  return match ? `ca-${match[1]}` : null;
+}
+
+function adsenseHead(client) {
+  return (
+    `<meta name="google-adsense-account" content="${client}">\n` +
+    `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous"></script>\n`
+  );
+}
+
+function adsTxt(client) {
+  return `google.com, ${client.slice(3)}, DIRECT, f08c47fec0942fa0\n`;
+}
+
+function rewriteSocialMeta(response, url, client) {
   if (response.status !== 200) return response;
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
@@ -519,7 +541,7 @@ function rewriteSocialMeta(response, url) {
   const page = `${origin}${path}`;
   const image = `${origin}${OG_IMAGE_PATH}`;
 
-  return new HTMLRewriter()
+  const rewriter = new HTMLRewriter()
     .on('meta[property="og:url"]', {
       element(element) {
         element.setAttribute("content", page);
@@ -539,14 +561,23 @@ function rewriteSocialMeta(response, url) {
       element(element) {
         element.setAttribute("href", page);
       },
-    })
-    .transform(response);
+    });
+
+  if (client) {
+    rewriter.on("head", {
+      element(element) {
+        element.append(adsenseHead(client), { html: true });
+      },
+    });
+  }
+
+  return rewriter.transform(response);
 }
 
 async function serveAssets(env, request, url) {
   const response = await env.ASSETS.fetch(request);
   if (request.method !== "GET") return response;
-  return rewriteSocialMeta(response, url);
+  return rewriteSocialMeta(response, url, adsenseClient(env));
 }
 
 /* ------------------------------------------------------------------ routing */
@@ -584,6 +615,20 @@ async function handle(request, env, ctx) {
   const avatarMatch = /^\/avatar\/([A-Za-z0-9-]{1,39})$/.exec(pathname);
   if (avatarMatch && (method === "GET" || method === "HEAD")) {
     return avatarProxy(avatarMatch[1], method === "HEAD");
+  }
+
+  if (pathname === "/ads.txt" && (method === "GET" || method === "HEAD")) {
+    const client = adsenseClient(env);
+    if (!client) {
+      return new Response(method === "HEAD" ? null : "", {
+        status: 404,
+        headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+      });
+    }
+    return new Response(method === "HEAD" ? null : adsTxt(client), {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+    });
   }
 
   if (pathname === "/api/health") {
