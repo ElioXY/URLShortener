@@ -390,6 +390,9 @@ export default function Dashboard({ me, loadingMe }) {
             <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
               Privacidad
             </a>
+            <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
+              Términos
+            </a>
             <a href="/" onClick={(event) => linkTo(event, "/")}>
               Volver al inicio
             </a>
