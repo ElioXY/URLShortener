@@ -221,7 +221,7 @@ function escapeHtml(value) {
   });
 }
 
-function statusPage({ status, kind, slug }) {
+function statusPage({ status, kind, slug }, nonce) {
   const safeSlug = escapeHtml(slug || "");
   const date = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const copy = {
@@ -251,7 +251,7 @@ function statusPage({ status, kind, slug }) {
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${copy.code} · ${escapeHtml(copy.title)} | elioxy links</title>
 <meta name="robots" content="noindex">
-<script src="/theme-boot.js"></script>
+<script src="/theme-boot.js" nonce="${nonce}"></script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/status.css">
 </head>
@@ -520,18 +520,69 @@ function adsenseClient(env) {
   return match ? `ca-${match[1]}` : null;
 }
 
-function adsenseHead(client) {
+function adsenseHead(client, nonce) {
   return (
     `<meta name="google-adsense-account" content="${client}">\n` +
-    `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous"></script>\n`
+    `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous" nonce="${nonce}"></script>\n`
   );
+}
+
+/* -------------------------------------------------------- security headers */
+
+// Google only supports a nonce-based strict CSP for AdSense, because the ad
+// code loads scripts from origins that change over time. Only the directives
+// that 'strict-dynamic' does not cover (images, fetches, frames) need origins.
+const ADSENSE_ORIGINS = [
+  "https://*.googlesyndication.com",
+  "https://*.doubleclick.net",
+  "https://*.google.com",
+  "https://*.gstatic.com",
+  "https://*.adtrafficquality.google",
+];
+
+function newNonce() {
+  return b64urlEncodeBytes(crypto.getRandomValues(new Uint8Array(16)));
+}
+
+function contentSecurityPolicy(nonce, client) {
+  const ads = client ? ADSENSE_ORIGINS : [];
+  const directives = [
+    "default-src 'self'",
+    // The nonce makes 'unsafe-inline' and every host allowlist in script-src
+    // moot, and 'strict-dynamic' trusts whatever the nonced ad code injects.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${client ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    ["img-src 'self' data:", ...ads].join(" "),
+    "font-src 'self'",
+    ["connect-src 'self'", ...ads].join(" "),
+    ...(client ? [["frame-src", ...ads].join(" ")] : []),
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+  ];
+  return directives.join("; ");
+}
+
+function withSecurityHeaders(response, nonce, client) {
+  const type = response.headers.get("content-type") || "";
+  if (!type.includes("text/html")) return response;
+  // A nonce cannot survive revalidation: a 304 reuses the cached body (old
+  // nonce) while this header carries a fresh one, and every script is blocked.
+  const secured = new Response(response.body, response);
+  secured.headers.delete("content-length");
+  secured.headers.delete("etag");
+  secured.headers.delete("last-modified");
+  secured.headers.set("cache-control", "no-store");
+  secured.headers.set("content-security-policy", contentSecurityPolicy(nonce, client));
+  return secured;
 }
 
 function adsTxt(client) {
   return `google.com, ${client.slice(3)}, DIRECT, f08c47fec0942fa0\n`;
 }
 
-function rewriteSocialMeta(response, url, client) {
+function rewriteSocialMeta(response, url, client, nonce) {
   if (response.status !== 200) return response;
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
@@ -542,6 +593,11 @@ function rewriteSocialMeta(response, url, client) {
   const image = `${origin}${OG_IMAGE_PATH}`;
 
   const rewriter = new HTMLRewriter()
+    .on("script", {
+      element(element) {
+        element.setAttribute("nonce", nonce);
+      },
+    })
     .on('meta[property="og:url"]', {
       element(element) {
         element.setAttribute("content", page);
@@ -566,7 +622,7 @@ function rewriteSocialMeta(response, url, client) {
   if (client) {
     rewriter.on("head", {
       element(element) {
-        element.append(adsenseHead(client), { html: true });
+        element.append(adsenseHead(client, nonce), { html: true });
       },
     });
   }
@@ -574,10 +630,10 @@ function rewriteSocialMeta(response, url, client) {
   return rewriter.transform(response);
 }
 
-async function serveAssets(env, request, url) {
+async function serveAssets(env, request, url, nonce) {
   const response = await env.ASSETS.fetch(request);
   if (request.method !== "GET") return response;
-  return rewriteSocialMeta(response, url, adsenseClient(env));
+  return rewriteSocialMeta(response, url, adsenseClient(env), nonce);
 }
 
 /* ------------------------------------------------------------------ routing */
@@ -606,7 +662,7 @@ async function avatarProxy(login, headOnly) {
   });
 }
 
-async function handle(request, env, ctx) {
+async function handle(request, env, ctx, nonce) {
   const url = new URL(request.url);
   const { pathname } = url;
   const baseUrl = (env.APP_ORIGIN || url.origin).replace(/\/+$/, "");
@@ -1012,17 +1068,17 @@ async function handle(request, env, ctx) {
     const slugMatch = /^\/([a-zA-Z0-9_-]{2,32})\/?$/.exec(pathname);
     if (slugMatch && !RESERVED.has(slugMatch[1].toLowerCase())) {
       const slug = slugMatch[1];
-      if (!env.DB) return serveAssets(env, request, url);
+      if (!env.DB) return serveAssets(env, request, url, nonce);
       await ensureSchema(env);
 
       const row = await env.DB.prepare("SELECT id, target, active, expires_at FROM links WHERE slug = ?")
         .bind(slug)
         .first();
 
-      if (!row) return statusPage({ status: 404, kind: "missing", slug });
-      if (Number(row.active) === 0) return statusPage({ status: 410, kind: "disabled", slug });
+      if (!row) return statusPage({ status: 404, kind: "missing", slug }, nonce);
+      if (Number(row.active) === 0) return statusPage({ status: 410, kind: "disabled", slug }, nonce);
       if (row.expires_at && Date.now() > Number(row.expires_at)) {
-        return statusPage({ status: 410, kind: "expired", slug });
+        return statusPage({ status: 410, kind: "expired", slug }, nonce);
       }
 
       if (method === "GET" && !isPreviewOrBot(request)) {
@@ -1044,7 +1100,7 @@ async function handle(request, env, ctx) {
       pathname === "/" || ["/panel", "/qr"].includes(pathname.replace(/\/+$/, ""));
     if (!isFile && !isSpaRoute && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/")) {
       const attempted = decodeURIComponent(pathname).replace(/^\/+|\/+$/g, "").slice(0, 60);
-      return statusPage({ status: 404, kind: "missing", slug: attempted });
+      return statusPage({ status: 404, kind: "missing", slug: attempted }, nonce);
     }
   }
 
@@ -1052,13 +1108,15 @@ async function handle(request, env, ctx) {
     return fail("not_found", 404);
   }
 
-  return serveAssets(env, request, url);
+  return serveAssets(env, request, url, nonce);
 }
 
 export default {
   async fetch(request, env, ctx) {
     try {
-      return await handle(request, env, ctx);
+      const nonce = newNonce();
+      const response = await handle(request, env, ctx, nonce);
+      return withSecurityHeaders(response, nonce, adsenseClient(env));
     } catch (error) {
       console.error("unhandled worker error", error);
       return json({ error: "internal_error" }, 500);
