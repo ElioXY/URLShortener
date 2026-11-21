@@ -23,6 +23,7 @@ const RESERVED = new Set([
   "health",
   "qr",
   "privacidad",
+  "terminos",
   "docs",
   "favicon.ico",
   "favicon.svg",
