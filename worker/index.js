@@ -522,6 +522,13 @@ function adsenseClient(env) {
   return match ? `ca-${match[1]}` : null;
 }
 
+// Los anuncios van solo en la portada: /panel es una pantalla de login sin
+// sesión y /privacidad, /terminos y /qr no son contenido que Google permita
+// monetizar.
+function adsEligible(url) {
+  return (url.pathname.replace(/\/+$/, "") || "/") === "/";
+}
+
 function adsenseHead(client, nonce) {
   return (
     `<meta name="google-adsense-account" content="${client}">\n` +
