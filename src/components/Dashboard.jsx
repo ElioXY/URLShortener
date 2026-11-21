@@ -387,6 +387,9 @@ export default function Dashboard({ me, loadingMe }) {
         <footer className="footer footer-dash">
           <div className="footer-inner">
             <p>url.elioxy.us.ci · enlaces cortos con QR</p>
+            <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
+              Privacidad
+            </a>
             <a href="/" onClick={(event) => linkTo(event, "/")}>
               Volver al inicio
             </a>

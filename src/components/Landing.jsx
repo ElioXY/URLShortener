@@ -263,6 +263,9 @@ export default function Landing({ me }) {
               <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
                 Generador QR
               </a>
+              <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
+                Privacidad
+              </a>
               <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
                 GitHub
               </a>

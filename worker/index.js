@@ -22,6 +22,7 @@ const RESERVED = new Set([
   "signin",
   "health",
   "qr",
+  "privacidad",
   "docs",
   "favicon.ico",
   "favicon.svg",
@@ -1097,7 +1098,7 @@ async function handle(request, env, ctx, nonce) {
 
     const isFile = /\.[a-zA-Z0-9]+$/.test(pathname);
     const isSpaRoute =
-      pathname === "/" || ["/panel", "/qr"].includes(pathname.replace(/\/+$/, ""));
+      pathname === "/" || ["/panel", "/qr", "/privacidad"].includes(pathname.replace(/\/+$/, ""));
     if (!isFile && !isSpaRoute && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/")) {
       const attempted = decodeURIComponent(pathname).replace(/^\/+|\/+$/g, "").slice(0, 60);
       return statusPage({ status: 404, kind: "missing", slug: attempted }, nonce);
