@@ -3959,10 +3959,9 @@ section[id] {
 @media (max-width: 720px) {
   .legal {
     padding: 22px 18px;
-    /* En el móvil la tarjeta ocupa todo el ancho: el marco y la sombra dura se
-       quedaban como una franja negra pegada al borde derecho durante todo el
-       scroll. Sin ellos la hoja blanca se sigue distinguiendo del papel. */
-    border: 0;
+    /* En el móvil la tarjeta ocupa todo el ancho y la sombra dura no tiene a
+       dónde caer: quedaba como una franja pegada al borde derecho durante todo
+       el scroll. Se quita solo la sombra; el marco negro se queda. */
     box-shadow: none;
     /* La tabla de cookies no cabe con el texto ampliado: se desplaza dentro
        de la tarjeta en vez de arrastrar toda la página en horizontal. */
