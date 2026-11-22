@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.prerender/
 .wrangler/
 .dev.vars
 .env

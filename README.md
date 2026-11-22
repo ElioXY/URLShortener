@@ -49,8 +49,10 @@ src/
     ui.jsx               iconos, marca, navegación, botón de copiar, fechas
   api.js                 cliente HTTP y mensajes de error en español
   guides.js              registro de guías que usan la portada, el pie y el router
+  routes.js              páginas pre-renderizadas: componente, título y descripción
   router.js              navegación SPA mínima
   styles.css             sistema de diseño y responsive
+scripts/prerender.mjs    genera el HTML estático de las páginas de contenido
 deploy.json              manifiesto de despliegue (Worker + assets + SPA)
 wrangler.jsonc           configuración para desarrollo local con Wrangler
 ```
@@ -65,7 +67,7 @@ wrangler.jsonc           configuración para desarrollo local con Wrangler
 
 ```bash
 npm ci            # instala desde el lockfile (o npm install)
-npm run build     # compila el frontend en dist/
+npm run build     # compila el frontend y pre-renderiza las páginas de contenido en dist/
 npm run preview   # Worker + assets en http://localhost:8787
 ```
 
@@ -163,6 +165,16 @@ Antes de pedir la verificación:
    Suiza desde el 16 de enero de 2024.
 
 ## Despliegue
+
+### Pre-renderizado de las páginas de contenido
+
+El rastreador de AdSense no ejecuta JavaScript de forma fiable, así que `/guias`, las cuatro
+guías y `/acerca` no se sirven como el cascarón vacío de la SPA: `npm run build` monta cada
+una con `react-dom/server` y escribe `dist/<ruta>/index.html` con el texto dentro. El Worker
+las pide a `ASSETS` con barra final y, si el fichero no existe, cae al cascarón normal.
+
+Las rutas viven en `src/routes.js` (una sola lista para el router y para el build). El resto
+del sitio — portada, panel, generador de QR, privacidad y términos — sigue siendo SPA.
 
 ### Freebuff Sites (configuración de este repo)
 
@@ -280,7 +292,7 @@ Reglas de validación:
 | Comando | Qué hace |
 | --- | --- |
 | `npm run dev` | Vite en modo desarrollo (proxy de `/api` y `/auth` al Worker en `:8787`) |
-| `npm run build` | Compila el frontend en `dist/` |
+| `npm run build` | Compila el frontend y pre-renderiza las páginas de contenido en `dist/` |
 | `npm run preview` / `npm run serve` | Wrangler dev sirviendo el Worker y `dist/` en `:8787` |
 
 ## Comprobación rápida

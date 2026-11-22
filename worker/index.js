@@ -37,6 +37,19 @@ const RESERVED = new Set([
   "_routes.json",
 ]);
 
+// Páginas de contenido que el build pre-renderiza a HTML estático
+// (`dist/<ruta>/index.html`, ver scripts/prerender.mjs). El rastreador de
+// AdSense no ejecuta JavaScript, así que estas rutas se sirven con el texto ya
+// dentro del HTML en lugar del cascarón vacío de la SPA.
+const PRERENDERED = new Set([
+  "/acerca",
+  "/guias",
+  "/guias/qr-tamano-real",
+  "/guias/elegir-slug",
+  "/guias/qr-wifi",
+  "/guias/caducidad-carteles",
+]);
+
 // Rutas de la SPA que existen de verdad. Cualquier otra cosa cae en la página
 // de 404 en vez de devolver la portada con un 200.
 const SPA_ROUTES = new Set([
@@ -45,12 +58,7 @@ const SPA_ROUTES = new Set([
   "/qr",
   "/privacidad",
   "/terminos",
-  "/acerca",
-  "/guias",
-  "/guias/qr-tamano-real",
-  "/guias/elegir-slug",
-  "/guias/qr-wifi",
-  "/guias/caducidad-carteles",
+  ...PRERENDERED,
 ]);
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,32}$/;
@@ -600,17 +608,24 @@ function contentSecurityPolicy(nonce, client) {
 }
 
 function withSecurityHeaders(response, nonce, client) {
-  const type = response.headers.get("content-type") || "";
-  if (!type.includes("text/html")) return response;
+  const headers = new Headers(response.headers);
+  // El mensaje de consentimiento de Google (Privacy & messaging) solo se sirve
+  // si la página comparte el Referer entre orígenes.
+  headers.set("referrer-policy", "strict-origin-when-cross-origin");
   // A nonce cannot survive revalidation: a 304 reuses the cached body (old
   // nonce) while this header carries a fresh one, and every script is blocked.
-  const secured = new Response(response.body, response);
-  secured.headers.delete("content-length");
-  secured.headers.delete("etag");
-  secured.headers.delete("last-modified");
-  secured.headers.set("cache-control", "no-store");
-  secured.headers.set("content-security-policy", contentSecurityPolicy(nonce, client));
-  return secured;
+  if ((headers.get("content-type") || "").includes("text/html")) {
+    headers.delete("content-length");
+    headers.delete("etag");
+    headers.delete("last-modified");
+    headers.set("cache-control", "no-store");
+    headers.set("content-security-policy", contentSecurityPolicy(nonce, client));
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function adsTxt(client) {
@@ -670,6 +685,29 @@ async function serveAssets(env, request, url, nonce) {
   if (request.method !== "GET") return response;
   const client = adsEligible(url) ? adsenseClient(env) : null;
   return rewriteSocialMeta(response, url, client, client ? adsenseSlot(env) : null, nonce);
+}
+
+/**
+ * Sirve una de las páginas pre-renderizadas del build.
+ *
+ * Se piden a ASSETS con barra final (`/guias/x/`): Cloudflare redirige las
+ * rutas que acaban en `.html`, así que pedir el fichero tal cual devolvería un
+ * 307 en lugar de la página. Si el fichero no existe (por ejemplo tras un
+ * `vite build` sin pre-renderizar) devuelve null y se cae al cascarón de la SPA.
+ */
+async function servePrerendered(env, request, url, nonce) {
+  const assetUrl = new URL(`${url.pathname.replace(/\/+$/, "")}/`, url.origin);
+  let response;
+  try {
+    response = await env.ASSETS.fetch(new Request(assetUrl, request));
+  } catch (error) {
+    console.error("prerendered asset failed", error);
+    return null;
+  }
+  if (response.status !== 200) return null;
+  const type = response.headers.get("content-type") || "";
+  if (!type.includes("text/html")) return null;
+  return rewriteSocialMeta(response, url, null, null, nonce);
 }
 
 /* ------------------------------------------------------------------ routing */
@@ -1131,8 +1169,14 @@ async function handle(request, env, ctx, nonce) {
       });
     }
 
-    const isFile = /\.[a-zA-Z0-9]+$/.test(pathname);
     const route = pathname.replace(/\/+$/, "") || "/";
+
+    if (method === "GET" && PRERENDERED.has(route)) {
+      const prerendered = await servePrerendered(env, request, url, nonce);
+      if (prerendered) return prerendered;
+    }
+
+    const isFile = /\.[a-zA-Z0-9]+$/.test(pathname);
     const isSpaRoute = SPA_ROUTES.has(route);
     if (!isFile && !isSpaRoute && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/")) {
       const attempted = decodeURIComponent(pathname).replace(/^\/+|\/+$/g, "").slice(0, 60);

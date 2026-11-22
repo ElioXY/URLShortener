@@ -190,7 +190,9 @@ export function avatarSrc(user) {
 }
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === "dark");
+  const [dark, setDark] = useState(
+    () => typeof document !== "undefined" && document.documentElement.dataset.theme === "dark"
+  );
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -279,7 +281,9 @@ export function Nav({ me, variant = "landing" }) {
             </a>
           ) : (
             <a className="btn btn-ghost btn-sm" href="/auth/github">
-              <GitHubIcon /> Entrar con GitHub
+              <GitHubIcon /> <span>
+                Entrar<span className="nav-btn-long"> con GitHub</span>
+              </span>
             </a>
           )}
         </div>

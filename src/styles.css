@@ -205,6 +205,23 @@ section[id] {
   gap: 10px;
 }
 
+/* Móvil estrecho o con el texto del sistema ampliado: «Entrar con GitHub» no
+   cabe en la barra y empujaba la página entera a lo ancho, que es lo que dejaba
+   el contenido desplazado al deslizar. Se queda «Entrar» junto al icono. */
+@media (max-width: 460px) {
+  .nav-btn-long {
+    display: none;
+  }
+
+  .nav-inner {
+    gap: 10px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+}
+
 .nav-user {
   display: inline-flex;
   align-items: center;
@@ -3792,6 +3809,9 @@ section[id] {
   background: var(--card);
   border: 2px solid var(--line);
   box-shadow: 6px 6px 0 var(--ink);
+  /* Nombres de cookie y URLs largas sin espacios: se parten antes que ensanchar
+     la tarjeta y sacar la página de la pantalla. */
+  overflow-wrap: break-word;
 }
 
 .legal-kicker {
@@ -3935,6 +3955,9 @@ section[id] {
   .legal {
     padding: 22px 18px;
     box-shadow: 4px 4px 0 var(--ink);
+    /* La tabla de cookies no cabe con el texto ampliado: se desplaza dentro
+       de la tarjeta en vez de arrastrar toda la página en horizontal. */
+    overflow-x: auto;
   }
 
   .legal-table td:first-child {
