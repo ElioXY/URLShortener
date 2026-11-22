@@ -54,6 +54,11 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* Nada de arrastrar la página de lado. Con el texto del sistema muy ampliado
+     algún elemento se pasa unos píxeles y el navegador deja desplazar todo el
+     documento; `clip` lo recorta sin crear un contenedor de scroll, así que la
+     barra pegajosa sigue funcionando. */
+  overflow-x: clip;
 }
 
 body {
@@ -3954,7 +3959,11 @@ section[id] {
 @media (max-width: 720px) {
   .legal {
     padding: 22px 18px;
-    box-shadow: 4px 4px 0 var(--ink);
+    /* En el móvil la tarjeta ocupa todo el ancho: el marco y la sombra dura se
+       quedaban como una franja negra pegada al borde derecho durante todo el
+       scroll. Sin ellos la hoja blanca se sigue distinguiendo del papel. */
+    border: 0;
+    box-shadow: none;
     /* La tabla de cookies no cabe con el texto ampliado: se desplaza dentro
        de la tarjeta en vez de arrastrar toda la página en horizontal. */
     overflow-x: auto;
