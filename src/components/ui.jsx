@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { linkTo } from "../router.js";
+import { ACERCA, GUIAS } from "../guides.js";
 
 /* ------------------------------------------------------------------ icons */
 
@@ -375,6 +376,113 @@ export function CopyImageNotice({ onDownload }) {
         <DownloadIcon /> Descargar PNG
       </button>
     </p>
+  );
+}
+
+/* ----------------------------------------------------------------- footer */
+
+export function SiteFooter() {
+  return (
+    <footer className="colofon">
+      <div className="colofon-top">
+        <div className="colofon-brand">
+          <a className="brand-link" href="/" onClick={(event) => linkTo(event, "/")}>
+            <Brand />
+          </a>
+          <p>Enlaces cortos y códigos QR. Nada más.</p>
+        </div>
+        <div className="colofon-links">
+          <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
+            Panel
+          </a>
+          <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
+            Generador QR
+          </a>
+          <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
+            Privacidad
+          </a>
+          <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
+            Términos
+          </a>
+          <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+        </div>
+      </div>
+
+      <nav className="colofon-guias" aria-label="Guías">
+        <a className="colofon-guias-title" href="/guias" onClick={(event) => linkTo(event, "/guias")}>
+          Guías
+        </a>
+        <ul>
+          {GUIAS.map((guia) => (
+            <li key={guia.path}>
+              <a href={guia.path} onClick={(event) => linkTo(event, guia.path)}>
+                {guia.title}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href={ACERCA.path} onClick={(event) => linkTo(event, ACERCA.path)}>
+              {ACERCA.title}
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div className="colofon-bottom">
+        <span>Colofón · Archivo + IBM Plex Mono</span>
+        <span>tinta #131311 · cobalto #1F2CE0 · amarillo #FFD23F · papel #F3F3EE</span>
+        <span>url.elioxy.us.ci</span>
+      </div>
+    </footer>
+  );
+}
+
+/* -------------------------------------------------------------------- ads */
+
+function metaContent(name) {
+  if (typeof document === "undefined") return "";
+  const node = document.querySelector(`meta[name="${name}"]`);
+  return node ? (node.getAttribute("content") || "").trim() : "";
+}
+
+/**
+ * Unidad de anuncio manual. El Worker solo publica las metas `google-adsense-account`
+ * y `adsense-slot` en la portada, así que en el resto de rutas esto no pinta nada.
+ */
+export function AdSlot({ className = "" }) {
+  const ins = useRef(null);
+  const client = metaContent("google-adsense-account");
+  const slot = metaContent("adsense-slot");
+  const ready = Boolean(client && slot);
+
+  useEffect(() => {
+    const node = ins.current;
+    if (!node || node.dataset.adPushed === "1") return;
+    node.dataset.adPushed = "1";
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch {
+      /* bloqueador de anuncios o script no disponible */
+    }
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <aside className={`ad-slot ${className}`.trim()} aria-label="Publicidad">
+      <span className="ad-slot-label">Publicidad</span>
+      <ins
+        ref={ins}
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-client={client}
+        data-ad-slot={slot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </aside>
   );
 }
 

@@ -1,7 +1,8 @@
-import { ArrowRightIcon, Background, Brand, GitHubIcon, Nav } from "./ui.jsx";
+import { AdSlot, ArrowRightIcon, Background, GitHubIcon, Nav, SiteFooter } from "./ui.jsx";
 import Shortener from "./Shortener.jsx";
 import { QrCanvas } from "./Qr.jsx";
 import { linkTo } from "../router.js";
+import { GUIAS } from "../guides.js";
 
 const EXAMPLE = "https://url.elioxy.us.ci/mi-cafe";
 
@@ -211,6 +212,41 @@ export default function Landing({ me }) {
             </ol>
           </section>
 
+          <section className="hoja" id="guias">
+            <header className="hoja-head">
+              <span className="folio">
+                <span className="folio-num">03 / 03</span>
+                Guías
+              </span>
+              <div>
+                <h2>Cómo sacarle partido</h2>
+                <p className="lede">
+                  Cuatro guías cortas sobre lo que de verdad se atasca: el tamaño del QR en papel, el final del
+                  enlace, el WiFi y los carteles con fecha de caducidad.
+                </p>
+              </div>
+            </header>
+
+            <div className="guias-grid">
+              {GUIAS.map((guia) => (
+                <article className="guia-card" key={guia.path}>
+                  <span className="guia-card-kicker">{guia.kicker}</span>
+                  <h3>
+                    <a href={guia.path} onClick={(event) => linkTo(event, guia.path)}>
+                      {guia.title}
+                    </a>
+                  </h3>
+                  <p>{guia.blurb}</p>
+                  <span className="guia-card-more" aria-hidden="true">
+                    Leer <ArrowRightIcon size={14} />
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <AdSlot />
+
           <section className="cupon">
             <div>
               <h2>Guarda los enlaces en tu cuenta.</h2>
@@ -248,38 +284,7 @@ export default function Landing({ me }) {
           </section>
         </main>
 
-        <footer className="colofon">
-          <div className="colofon-top">
-            <div className="colofon-brand">
-              <a className="brand-link" href="/" onClick={(event) => linkTo(event, "/")}>
-                <Brand />
-              </a>
-              <p>Enlaces cortos y códigos QR. Nada más.</p>
-            </div>
-            <div className="colofon-links">
-              <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
-                Panel
-              </a>
-              <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
-                Generador QR
-              </a>
-              <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
-                Privacidad
-              </a>
-              <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
-                Términos
-              </a>
-              <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
-                GitHub
-              </a>
-            </div>
-          </div>
-          <div className="colofon-bottom">
-            <span>Colofón · Archivo + IBM Plex Mono</span>
-            <span>tinta #131311 · cobalto #1F2CE0 · amarillo #FFD23F · papel #F3F3EE</span>
-            <span>url.elioxy.us.ci</span>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

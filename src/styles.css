@@ -2172,6 +2172,192 @@ section[id] {
   width: 100%;
 }
 
+/* ----------------------------------------------------------------- guías */
+
+.guias-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 2px solid var(--line);
+}
+
+.guia-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: clamp(16px, 2.2vw, 24px) clamp(16px, 2.4vw, 30px) clamp(16px, 2.2vw, 24px) 0;
+  border-bottom: 1px dotted var(--line-soft);
+}
+
+.guia-card:nth-child(odd) {
+  border-right: 1px solid var(--line-soft);
+}
+
+.guia-card:nth-child(even) {
+  padding-left: clamp(16px, 2.4vw, 30px);
+  padding-right: 0;
+}
+
+.guia-card-kicker {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cobalt);
+}
+
+.guia-card h3 {
+  margin: 0;
+  font-size: 1.04rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+/* Las tarjetas viven tanto en la portada como dentro del artículo legal de
+   /guias: el color se fija aquí para que no lo herede de `.legal a`. */
+.guia-card h3 a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.guia-card h3 a:hover {
+  color: var(--cobalt);
+  border-bottom-color: currentColor;
+}
+
+/* Con más especificidad que `.legal p`, porque las tarjetas también viven
+   dentro del artículo legal de /guias. */
+.guias-grid .guia-card p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.guia-card-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 10px;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cobalt);
+}
+
+.guia-related {
+  margin-top: clamp(24px, 3.2vw, 36px);
+  padding-top: 16px;
+  border-top: 2px solid var(--line);
+}
+
+.guia-related-title {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.guia-related ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guia-related a {
+  color: var(--cobalt);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.9rem;
+}
+
+.colofon-guias {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--line-soft);
+}
+
+.colofon-guias-title {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.colofon-guias-title:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.colofon-guias ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.colofon-guias a {
+  display: inline-block;
+  padding: 2px 4px;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.colofon-guias a:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .guias-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guia-card:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .guia-card:nth-child(even) {
+    padding-left: 0;
+  }
+}
+
+/* -------------------------------------------------------------------- ads */
+
+.ad-slot {
+  margin-top: clamp(30px, 4.2vw, 54px);
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ad-slot-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 900px) {
@@ -3523,6 +3709,32 @@ section[id] {
   transition-duration: 0.05s;
 }
 
+/* Tableta (641–900 px): la barra no cabe entera, así que se quedan los dos
+   enlaces de acción y se ocultan los anclas de sección, que ya están en la
+   propia página. Sin `nowrap`, «Cómo funciona» y «Entrar con GitHub» se
+   partían en dos líneas y la barra crecía. */
+@media (max-width: 900px) {
+  .nav-inner {
+    gap: 14px;
+  }
+
+  .nav-links {
+    gap: 14px;
+  }
+
+  .nav-links a {
+    white-space: nowrap;
+  }
+
+  .nav-links a[href^="#"] {
+    display: none;
+  }
+
+  .nav-actions .btn {
+    white-space: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -3654,6 +3866,20 @@ section[id] {
   font-size: 0.82em;
 }
 
+.legal .legal-note {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  background: var(--paper-2);
+  border-left: 3px solid var(--yellow);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.legal .legal-note strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .legal-table {
   width: 100%;
   margin-top: 6px;
@@ -3713,5 +3939,14 @@ section[id] {
 
   .legal-table td:first-child {
     white-space: normal;
+  }
+
+  .legal-table {
+    font-size: 0.8rem;
+  }
+
+  .legal-table th,
+  .legal-table td {
+    padding: 7px 6px;
   }
 }

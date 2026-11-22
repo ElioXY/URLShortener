@@ -18,7 +18,9 @@
   "vars": {
     "GITHUB_CLIENT_ID": "Ov23lia1cqjM40EBROc1",
     // ca-pub-XXXXXXXXXXXXXXXX del panel de AdSense. Vacío = sin anuncios y /ads.txt en 404.
-    "ADSENSE_CLIENT": "pub-9462853287400844"
+    "ADSENSE_CLIENT": "pub-9462853287400844",
+    // data-ad-slot de la unidad de anuncio de la portada. Vacío = sin unidad manual.
+    "ADSENSE_SLOT": ""
   },
   "observability": {
     "enabled": true

@@ -1,4 +1,4 @@
-import { Background, Brand, Nav } from "./ui.jsx";
+import { Background, Nav, SiteFooter } from "./ui.jsx";
 import { linkTo } from "../router.js";
 
 const UPDATED = "21 de noviembre de 2026";
@@ -117,38 +117,7 @@ export default function Terms({ me }) {
           </article>
         </main>
 
-        <footer className="colofon">
-          <div className="colofon-top">
-            <div className="colofon-brand">
-              <a className="brand-link" href="/" onClick={(event) => linkTo(event, "/")}>
-                <Brand />
-              </a>
-              <p>Enlaces cortos y códigos QR. Nada más.</p>
-            </div>
-            <div className="colofon-links">
-              <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
-                Panel
-              </a>
-              <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
-                Generador QR
-              </a>
-              <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
-                Privacidad
-              </a>
-              <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
-                Términos
-              </a>
-              <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
-                GitHub
-              </a>
-            </div>
-          </div>
-          <div className="colofon-bottom">
-            <span>Colofón · Archivo + IBM Plex Mono</span>
-            <span>tinta #131311 · cobalto #1F2CE0 · amarillo #FFD23F · papel #F3F3EE</span>
-            <span>url.elioxy.us.ci</span>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

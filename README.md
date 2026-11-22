@@ -43,8 +43,12 @@ src/
     History.jsx          sparkline, gráfico e histórico por enlace
     QrStudio.jsx         generador de QR (enlace, WiFi, texto, contacto)
     Qr.jsx               render de QR, descargas PNG/SVG, etiqueta y copia de imagen
+    About.jsx            página «Acerca de»
+    Guide.jsx            cascarón común de las guías (texto largo, guías relacionadas)
+    guias/               QR a tamaño real, elegir slug, QR para WiFi, caducidad de carteles
     ui.jsx               iconos, marca, navegación, botón de copiar, fechas
   api.js                 cliente HTTP y mensajes de error en español
+  guides.js              registro de guías que usan la portada, el pie y el router
   router.js              navegación SPA mínima
   styles.css             sistema de diseño y responsive
 deploy.json              manifiesto de despliegue (Worker + assets + SPA)
@@ -120,6 +124,8 @@ acortador y los QR funcionan y el panel solo muestra el aviso de configuración.
 | `GITHUB_CLIENT_SECRET` | Sí | Secreto de la OAuth App; también firma la sesión si no hay `SESSION_SECRET` |
 | `SESSION_SECRET` | No | Clave independiente para firmar cookies; recomendable para rotar credenciales sin cerrar sesiones. Si cambia, se invalidan todas las sesiones (la duración de la sesión, 30 días, está fijada en el Worker) |
 | `APP_ORIGIN` | No | Fuerza el origen base de los enlaces y del callback, por ejemplo `https://url.elioxy.us.ci` si hay un proxy delante |
+| `ADSENSE_CLIENT` | No | `pub-…` del panel de AdSense. Vacío = sin anuncios y `/ads.txt` responde 404 |
+| `ADSENSE_SLOT` | No | `data-ad-slot` de la unidad de anuncio de la portada. Vacío = no se pinta ninguna unidad |
 
 No pongas estos valores en el repositorio: no hay ningún `.env` versionado y `.gitignore`
 excluye `.dev.vars` y `.env*`.
@@ -134,6 +140,27 @@ npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put SESSION_SECRET    # opcional
 ```
+
+## Anuncios (AdSense)
+
+La publicidad está limitada a la portada. El Worker solo añade el código de AdSense y la
+unidad de anuncio cuando la ruta es `/` y `ADSENSE_CLIENT` está definido; el panel, el
+generador de QR, las páginas legales, las redirecciones y las páginas 404/410 no llevan
+nunca anuncios. `adsEligible()` es el único sitio que decide esto.
+
+Antes de pedir la verificación:
+
+1. En AdSense, añade el sitio como **`elioxy.us.ci`** (dominio raíz). Desde marzo de 2023
+   AdSense no acepta subdominios: `url.elioxy.us.ci` no se puede añadir, pero queda
+   cubierto por el dominio raíz, que es donde tiene que estar `ads.txt`.
+2. `https://elioxy.us.ci/ads.txt` debe llevar la línea
+   `google.com, pub-…, DIRECT, f08c47fec0942fa0` con el mismo `pub-` que `ADSENSE_CLIENT`.
+   El Worker sirve además `/ads.txt` en este subdominio.
+3. Crea una unidad de anuncio de display en el panel y pon su `data-ad-slot` en
+   `ADSENSE_SLOT`; la portada la pinta con la etiqueta «Publicidad».
+4. En **Privacidad y mensajería → Regulaciones europeas**, activa el mensaje de
+   consentimiento: es la CMP certificada que Google exige para el EEE, el Reino Unido y
+   Suiza desde el 16 de enero de 2024.
 
 ## Despliegue
 

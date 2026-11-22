@@ -1,7 +1,14 @@
-import { Background, Brand, Nav } from "./ui.jsx";
+import { Background, Nav, SiteFooter } from "./ui.jsx";
 import { linkTo } from "../router.js";
 
-const UPDATED = "21 de noviembre de 2026";
+const UPDATED = "22 de noviembre de 2026";
+
+// Ponlo en true cuando el mensaje de consentimiento de Google esté encendido
+// (AdSense → Privacidad y mensajería → Regulaciones europeas). Mientras sea
+// false, esta página describe el estado real y el aviso de «pendiente» sigue
+// visible: sin mensaje no hay publicidad personalizada en el EEE, el Reino
+// Unido ni Suiza.
+const CONSENT_MESSAGE_ACTIVE = false;
 
 export default function Privacy({ me }) {
   return (
@@ -60,7 +67,10 @@ export default function Privacy({ me }) {
 
             <section>
               <h2>Cookies</h2>
-              <p>Son todas propias, HttpOnly, SameSite=Lax y Secure. No hay cookies de publicidad servidas por este sitio.</p>
+              <p>
+                Las cookies propias son HttpOnly, SameSite=Lax y Secure, y solo hacen lo que dice la tabla. Las de
+                publicidad no las pone este sitio: las escribe el código de Google que sirve el anuncio.
+              </p>
               <table className="legal-table">
                 <thead>
                   <tr>
@@ -93,6 +103,66 @@ export default function Privacy({ me }) {
                   </tr>
                 </tbody>
               </table>
+              <p>
+                Anuncios: al cargarse un anuncio en la portada, Google y sus socios pueden escribir cookies
+                publicitarias como <code>__gads</code>, <code>__gpi</code>, <code>IDE</code> o <code>NID</code>, con
+                una duración de entre unas horas y algo más de un año. En el Espacio Económico Europeo, el Reino Unido
+                y Suiza esas cookies solo se usan para personalizar la publicidad cuando el mensaje de consentimiento
+                está activo y lo aceptas; mientras no lo esté, los anuncios que se sirven ahí no se basan en tu
+                historial de navegación.
+              </p>
+            </section>
+
+            <section>
+              <h2>Anuncios de Google</h2>
+              <ul>
+                <li>
+                  Terceros, incluido Google, usan cookies para servir anuncios a partir de tus visitas anteriores a este
+                  sitio o a otros sitios de internet.
+                </li>
+                <li>
+                  El uso que Google hace de las cookies de publicidad permite a Google y a sus socios servirte anuncios
+                  basados en tu visita a este sitio o a otros sitios de internet.
+                </li>
+                <li>
+                  Puedes desactivar la publicidad personalizada en{" "}
+                  <a href="https://www.google.com/settings/ads" target="_blank" rel="noreferrer">
+                    Configuración de anuncios de Google
+                  </a>
+                  , o desactivar las cookies de personalización de terceros en{" "}
+                  <a href="https://www.aboutads.info/choices/" target="_blank" rel="noreferrer">
+                    aboutads.info
+                  </a>{" "}
+                  y, en España, en{" "}
+                  <a href="https://www.youronlinechoices.com/es/" target="_blank" rel="noreferrer">
+                    youronlinechoices.com
+                  </a>
+                  .
+                </li>
+                <li>
+                  En el Espacio Económico Europeo, el Reino Unido y Suiza, Google solo puede usar cookies de publicidad
+                  personalizada con tu consentimiento previo, y ese consentimiento se recoge con su plataforma
+                  certificada de gestión del consentimiento (la que exige su política de consentimiento de usuarios de
+                  la UE). Cuando ese mensaje está activo, aparece antes de cargar los anuncios y desde él puedes
+                  aceptar, rechazar o cambiar las preferencias, además de volver a abrirlo con el enlace «Privacidad y
+                  cookies» del propio anuncio.{" "}
+                  {CONSENT_MESSAGE_ACTIVE
+                    ? "En este sitio el mensaje está activo."
+                    : "En este sitio el mensaje aún no está activo, así que ahora mismo no se sirve publicidad personalizada en esas regiones."}
+                </li>
+                <li>
+                  Los anuncios solo se muestran en la portada. Las redirecciones de los enlaces cortos, el panel, el
+                  generador de QR, las páginas legales y las páginas de error no llevan publicidad.
+                </li>
+              </ul>
+              {!CONSENT_MESSAGE_ACTIVE && (
+                <p className="legal-note">
+                  <strong>Pendiente de activar.</strong> El mensaje de consentimiento de Google se enciende en el panel
+                  de AdSense, en Privacidad y mensajería → Regulaciones europeas. Hasta que se active, en el Espacio
+                  Económico Europeo, el Reino Unido y Suiza solo se sirven anuncios no personalizados, y esta página
+                  seguirá diciéndolo así.
+                </p>
+              )}
             </section>
 
             <section>
@@ -107,12 +177,15 @@ export default function Privacy({ me }) {
                   perfil público.
                 </li>
                 <li>
-                  <strong>Google</strong> sirve los anuncios que puedas ver en esta página. Puede usar cookies e
-                  identificadores propios y mostrarte anuncios personalizados; si estás en el Espacio Económico
-                  Europeo, muestra un mensaje de consentimiento desde el que puedes cambiar tus preferencias. Su
-                  política está en{" "}
+                  <strong>Google</strong> sirve los anuncios de la portada. Puede usar cookies e identificadores
+                  propios; la publicidad personalizada depende del consentimiento que recoge su mensaje (ver «Anuncios
+                  de Google»). Su política está en{" "}
                   <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer">
                     policies.google.com/technologies/ads
+                  </a>{" "}
+                  y la de los sitios que muestran sus anuncios, en{" "}
+                  <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noreferrer">
+                    policies.google.com/technologies/partner-sites
                   </a>
                   .
                 </li>
@@ -127,7 +200,7 @@ export default function Privacy({ me }) {
               <h2>Lo que no se guarda</h2>
               <ul>
                 <li>Direcciones IP ni user-agents completos.</li>
-                <li>Analítica de terceros: no hay Google Analytics, ni píxeles, ni perfiles de navegación.</li>
+                <li>Analítica de terceros: no hay Google Analytics, ni píxeles de analítica, ni perfiles de navegación.</li>
                 <li>
                   El contenido de tus códigos QR no sale de tu equipo: el código y el PNG o SVG se generan en el
                   navegador.
@@ -180,38 +253,7 @@ export default function Privacy({ me }) {
           </article>
         </main>
 
-        <footer className="colofon">
-          <div className="colofon-top">
-            <div className="colofon-brand">
-              <a className="brand-link" href="/" onClick={(event) => linkTo(event, "/")}>
-                <Brand />
-              </a>
-              <p>Enlaces cortos y códigos QR. Nada más.</p>
-            </div>
-            <div className="colofon-links">
-              <a href="/panel" onClick={(event) => linkTo(event, "/panel")}>
-                Panel
-              </a>
-              <a href="/qr" onClick={(event) => linkTo(event, "/qr")}>
-                Generador QR
-              </a>
-              <a href="/privacidad" onClick={(event) => linkTo(event, "/privacidad")}>
-                Privacidad
-              </a>
-              <a href="/terminos" onClick={(event) => linkTo(event, "/terminos")}>
-                Términos
-              </a>
-              <a href="https://github.com/ElioXY" target="_blank" rel="noreferrer">
-                GitHub
-              </a>
-            </div>
-          </div>
-          <div className="colofon-bottom">
-            <span>Colofón · Archivo + IBM Plex Mono</span>
-            <span>tinta #131311 · cobalto #1F2CE0 · amarillo #FFD23F · papel #F3F3EE</span>
-            <span>url.elioxy.us.ci</span>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

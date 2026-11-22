@@ -24,6 +24,8 @@ const RESERVED = new Set([
   "qr",
   "privacidad",
   "terminos",
+  "guias",
+  "acerca",
   "docs",
   "favicon.ico",
   "favicon.svg",
@@ -33,6 +35,22 @@ const RESERVED = new Set([
   "index.html",
   "_headers",
   "_routes.json",
+]);
+
+// Rutas de la SPA que existen de verdad. Cualquier otra cosa cae en la página
+// de 404 en vez de devolver la portada con un 200.
+const SPA_ROUTES = new Set([
+  "/",
+  "/panel",
+  "/qr",
+  "/privacidad",
+  "/terminos",
+  "/acerca",
+  "/guias",
+  "/guias/qr-tamano-real",
+  "/guias/elegir-slug",
+  "/guias/qr-wifi",
+  "/guias/caducidad-carteles",
 ]);
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,32}$/;
@@ -522,6 +540,13 @@ function adsenseClient(env) {
   return match ? `ca-${match[1]}` : null;
 }
 
+// Unidad de anuncio manual (data-ad-slot del panel de AdSense). Sin ella solo
+// se podrían servir anuncios automáticos, que no se pueden limitar a la portada.
+function adsenseSlot(env) {
+  const match = /^(\d{6,20})$/.exec(String(env.ADSENSE_SLOT || "").trim());
+  return match ? match[1] : null;
+}
+
 // Los anuncios van solo en la portada: /panel es una pantalla de login sin
 // sesión y /privacidad, /terminos y /qr no son contenido que Google permita
 // monetizar.
@@ -529,9 +554,10 @@ function adsEligible(url) {
   return (url.pathname.replace(/\/+$/, "") || "/") === "/";
 }
 
-function adsenseHead(client, nonce) {
+function adsenseHead(client, slot, nonce) {
   return (
     `<meta name="google-adsense-account" content="${client}">\n` +
+    (slot ? `<meta name="adsense-slot" content="${slot}">\n` : "") +
     `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous" nonce="${nonce}"></script>\n`
   );
 }
@@ -591,7 +617,7 @@ function adsTxt(client) {
   return `google.com, ${client.slice(3)}, DIRECT, f08c47fec0942fa0\n`;
 }
 
-function rewriteSocialMeta(response, url, client, nonce) {
+function rewriteSocialMeta(response, url, client, slot, nonce) {
   if (response.status !== 200) return response;
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
@@ -631,7 +657,7 @@ function rewriteSocialMeta(response, url, client, nonce) {
   if (client) {
     rewriter.on("head", {
       element(element) {
-        element.append(adsenseHead(client, nonce), { html: true });
+        element.append(adsenseHead(client, slot, nonce), { html: true });
       },
     });
   }
@@ -642,7 +668,8 @@ function rewriteSocialMeta(response, url, client, nonce) {
 async function serveAssets(env, request, url, nonce) {
   const response = await env.ASSETS.fetch(request);
   if (request.method !== "GET") return response;
-  return rewriteSocialMeta(response, url, adsEligible(url) ? adsenseClient(env) : null, nonce);
+  const client = adsEligible(url) ? adsenseClient(env) : null;
+  return rewriteSocialMeta(response, url, client, client ? adsenseSlot(env) : null, nonce);
 }
 
 /* ------------------------------------------------------------------ routing */
@@ -1105,8 +1132,8 @@ async function handle(request, env, ctx, nonce) {
     }
 
     const isFile = /\.[a-zA-Z0-9]+$/.test(pathname);
-    const isSpaRoute =
-      pathname === "/" || ["/panel", "/qr", "/privacidad", "/terminos"].includes(pathname.replace(/\/+$/, ""));
+    const route = pathname.replace(/\/+$/, "") || "/";
+    const isSpaRoute = SPA_ROUTES.has(route);
     if (!isFile && !isSpaRoute && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/")) {
       const attempted = decodeURIComponent(pathname).replace(/^\/+|\/+$/g, "").slice(0, 60);
       return statusPage({ status: 404, kind: "missing", slug: attempted }, nonce);
