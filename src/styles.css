@@ -3959,10 +3959,11 @@ section[id] {
 @media (max-width: 720px) {
   .legal {
     padding: 22px 18px;
-    /* En el móvil la tarjeta ocupa todo el ancho y la sombra dura no tiene a
-       dónde caer: quedaba como una franja pegada al borde derecho durante todo
-       el scroll. Se quita solo la sombra; el marco negro se queda. */
-    box-shadow: none;
+    /* La sombra vuelve, pero con sitio: el margen derecho reserva su ancho para
+       que caiga dentro del hueco y quede papel a los dos lados, en vez de
+       quedar pegada al borde de la pantalla como una franja. */
+    margin-right: 4px;
+    box-shadow: 4px 4px 0 var(--ink);
     /* La tabla de cookies no cabe con el texto ampliado: se desplaza dentro
        de la tarjeta en vez de arrastrar toda la página en horizontal. */
     overflow-x: auto;
